@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 
-const IMAGES = ["/hero.png", "/hero2.png"];
+const IMAGES = ["/hero.png", "/hero3.png"];
 const SQUARE_SIZE = 200; 
 const INTERVAL = 5000;
 

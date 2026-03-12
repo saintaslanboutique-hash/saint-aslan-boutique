@@ -23,8 +23,6 @@ const menuLinks = [
 
 type Page = "shoes" | "dress" | "jacket" | "trousers" | "contact";
 
-
-
 const dotStyles = `
   inline-block
   w-0 h-0 bg-black dark:bg-white rounded-full

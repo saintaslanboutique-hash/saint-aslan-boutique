@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
-import { Host_Grotesk } from "next/font/google";
-import { Michroma } from "next/font/google";
+import { Geist, Host_Grotesk, Michroma } from "next/font/google";
 
-import "./globals.css";
-import LayoutClient from "./layout-client";
+import { cn } from "@/lib/utils";
 import localFont from 'next/font/local';
+import "./globals.css";
+import AuthProvider from "@/src/app/providers/auth-provider";
+import { getServerSession } from "next-auth";
+import { authOptions } from "./api/auth/[...nextauth]/route";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const hostGrotesk = Host_Grotesk({
   subsets: ["latin"],
@@ -30,18 +34,21 @@ export const metadata: Metadata = {
   description: "SAINT ASLAN",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getServerSession(authOptions)
   return (
     <html
       lang="en"
-      className={`${hostGrotesk.variable} ${azonixFont.variable} ${michroma.variable}`}
+      className={cn(hostGrotesk.variable, azonixFont.variable, michroma.variable, "font-sans", geist.variable)}
     >
       <body className={`${hostGrotesk.className} ${michroma.className} ${azonixFont.variable} antialiased`}>
-        <LayoutClient>{children}</LayoutClient>
+        <AuthProvider session={session}>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

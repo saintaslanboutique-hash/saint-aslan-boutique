@@ -14,7 +14,7 @@ export default function IntroHeader() {
                 <motion.div
                     layoutId={LOGO_CONTAINER_LAYOUT_ID}
                     // Added 'relative' and ensuring the container has a clean flex context
-                    className="relative flex items-center justify-center bg-white px-8 py-2 overflow-hidden"
+                    className="relative flex items-center justify-center bg-white px-8 py-2 overflow-hidden z-50"
                     transition={{
                         type: "spring",
                         stiffness: 40,

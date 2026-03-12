@@ -74,7 +74,7 @@ export function IntroLoader() {
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 bg-[#1c1d1d] flex items-center justify-center"
+      className="fixed inset-0 bg-[#1c1d1d] flex items-center justify-center"
       initial={false}
       animate={{ opacity: titleInNavbar ? 0 : 1 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
@@ -85,7 +85,7 @@ export function IntroLoader() {
           <motion.div
             ref={containerRef}
             layoutId={LOGO_CONTAINER_LAYOUT_ID}
-            className={`flex items-center justify-center px-6 py-3 ${
+            className={`flex items-center justify-center px-6 py-3 z-50 ${
               inverted ? "bg-white" : "bg-transparent"
             }`}
             transition={{

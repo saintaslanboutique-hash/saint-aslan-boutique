@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, LayoutGroup } from "framer-motion";
+import { Toaster } from "react-hot-toast";
 import { IntroProvider, useIntro } from "@/src/shared/lib/intro-context";
 import { IntroLoader } from "@/src/shared/ui/intro-loader";
 import Header from "@/src/widgets/header/header";
@@ -34,7 +35,7 @@ function IntroAndContent({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function LayoutClient({
+export default function AppShell({
   children,
 }: {
   children: React.ReactNode;
@@ -44,6 +45,7 @@ export default function LayoutClient({
       <LayoutGroup>
         <IntroAndContent>{children}</IntroAndContent>
       </LayoutGroup>
+      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
     </IntroProvider>
   );
 }
