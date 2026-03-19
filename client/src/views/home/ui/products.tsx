@@ -148,7 +148,7 @@ export default function ProductsSection() {
 
             </section>
             <section ref={cardsSectionRef} className="bg-black hidden lg:flex h-screen w-full items-center justify-center overflow-hidden">
-                <div className="grid grid-cols-4 gap-5 px-10 w-full max-w-[1400px]">
+                <div className="grid grid-cols-4 gap-8 px-10 w-full max-w-[1600px]">
                     {randomProducts.map((product, i) => (
                         <div
                             key={i}

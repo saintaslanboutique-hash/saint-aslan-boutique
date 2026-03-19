@@ -23,7 +23,7 @@ export default function ProductMarketCard({
   return (
     <article className="w-full group">
       <Link href={`/products/${product._id}`} className="block">
-        <div className="relative aspect-3/4 w-full overflow-hidden rounded-sm bg-neutral-100">
+        <div className="relative aspect-3/5 w-full overflow-hidden rounded-sm bg-neutral-100">
           {product.image ? (
             <Image
               src={product.image}
