@@ -1,3 +1,5 @@
+import AdminDashboard from "@/src/views/admin/ui/admin-dashboard";
+
 export default function AdminDashboardPage() {
-  return <div>AdminDashboardPage</div>;
+  return <AdminDashboard />
 }

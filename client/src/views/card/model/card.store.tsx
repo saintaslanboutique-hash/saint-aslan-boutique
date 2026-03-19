@@ -1,4 +1,4 @@
-import { Product } from "@/src/entities/product/model/model.types";
+import { Product } from "@/src/entities/product/types/product.types";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import cartAPI from "../service/card.api";

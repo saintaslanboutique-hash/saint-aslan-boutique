@@ -1,7 +1,4 @@
-import { User, UserRole } from "../types/user.types";
-
-
-
+import {  User, UserRole } from "../types/user.types";
 
 export const hasRole = (user: User | null, role: UserRole):boolean => {
     if(!user) return false;

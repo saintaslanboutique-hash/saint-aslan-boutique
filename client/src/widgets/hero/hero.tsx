@@ -2,16 +2,21 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
+import Link from "next/link";
 
-const IMAGES = ["/hero.png", "/hero3.png"];
-const SQUARE_SIZE = 200; 
+const IMAGES = ["/hero_22.jpg", "/hero_33.jpg"];
+const SQUARE_SIZE = 200;
 const INTERVAL = 5000;
+
+type ImageNaturalSize = { width: number; height: number };
 
 export default function Hero() {
     const containerRef = useRef<HTMLDivElement>(null);
+
     const [currentIdx, setCurrentIdx] = useState(0);
     const [nextIdx, setNextIdx] = useState(1);
-    const [grid, setGrid] = useState({ cols: 0, rows: 0 });
+    const [grid, setGrid] = useState({ cols: 0, rows: 0, width: 0, height: 0 });
+    const [imageSizes, setImageSizes] = useState<Record<string, ImageNaturalSize>>({});
     const isAnimating = useRef(false);
 
     const calcGrid = useCallback(() => {
@@ -20,6 +25,8 @@ export default function Hero() {
         setGrid({
             cols: Math.ceil(clientWidth / SQUARE_SIZE),
             rows: Math.ceil(clientHeight / SQUARE_SIZE),
+            width: clientWidth,
+            height: clientHeight,
         });
     }, []);
 
@@ -29,9 +36,62 @@ export default function Hero() {
         return () => window.removeEventListener("resize", calcGrid);
     }, [calcGrid]);
 
+
+
+    // Preload all images to get natural dimensions
+    useEffect(() => {
+        IMAGES.forEach((src) => {
+            const img = new Image();
+            img.onload = () => {
+                setImageSizes((prev) => ({
+                    ...prev,
+                    [src]: { width: img.naturalWidth, height: img.naturalHeight },
+                }));
+            };
+            img.src = src;
+        });
+    }, []);
+
+    /**
+     * Calculates the exact backgroundSize and backgroundPosition for a grid cell
+     * to perfectly match `background-size: cover; background-position: center`
+     * on the full container.
+     */
+    const getCoverStyle = useCallback(
+        (src: string, col: number, row: number) => {
+            const { width: containerW, height: containerH, cols, rows } = grid;
+            const imgSize = imageSizes[src];
+
+            if (!imgSize || !containerW || !containerH) return {};
+
+            // Replicate CSS `cover`: scale image so it fills the container, maintaining aspect ratio
+            const scale = Math.max(containerW / imgSize.width, containerH / imgSize.height);
+            const renderedW = imgSize.width * scale;
+            const renderedH = imgSize.height * scale;
+
+            // Center offset: how far the image extends beyond the container edges
+            const xOffset = (renderedW - containerW) / 2;
+            const yOffset = (renderedH - containerH) / 2;
+
+            // Cell dimensions
+            const cellW = containerW / cols;
+            const cellH = containerH / rows;
+
+            // Position of the image's top-left corner relative to this cell's top-left corner
+            const bgPosX = -(xOffset + col * cellW);
+            const bgPosY = -(yOffset + row * cellH);
+
+            return {
+                backgroundSize: `${renderedW}px ${renderedH}px`,
+                backgroundPosition: `${bgPosX}px ${bgPosY}px`,
+            };
+        },
+        [grid, imageSizes]
+    );
+
     const runTransition = useCallback(() => {
         if (isAnimating.current || grid.cols === 0) return;
-        
+
         const squares = containerRef.current?.querySelectorAll(".sq");
         if (!squares) return;
 
@@ -39,19 +99,16 @@ export default function Hero() {
 
         const tl = gsap.timeline({
             onComplete: () => {
-                // Update the background image of the base layer
                 setCurrentIdx(nextIdx);
                 setNextIdx((prev) => (prev + 1) % IMAGES.length);
-                
-                // Reset squares for the next cycle
-                gsap.set(squares, { opacity: 0, scale: 0 });
+                gsap.set(squares, { opacity: 0, clipPath: "inset(50%)" });
                 isAnimating.current = false;
-            }
+            },
         });
 
         tl.to(squares, {
             opacity: 1,
-            scale: 1.01, // Slight overlap (1.01) prevents tiny gaps between squares
+            clipPath: "inset(0%)",
             duration: 0.7,
             stagger: {
                 amount: 0.7,
@@ -68,17 +125,18 @@ export default function Hero() {
 
     return (
         <div ref={containerRef} className="relative w-full h-screen overflow-hidden bg-black">
-            {/* Base Image: Using CSS Background instead of Next Image */}
-            <div 
-                className="absolute inset-0 z-0 transition-none scale-0.98"
-                style={{
-                    backgroundImage: `url(${IMAGES[currentIdx]})`,
-                    backgroundPosition: 'center',
-                    backgroundSize: 'cover',
-                    backgroundRepeat: 'no-repeat',
-                    
-                }}
-            />
+            {/* Base Image */}
+            <Link href="/products">
+                <div
+                    className="absolute inset-0 z-0"
+                    style={{
+                        backgroundImage: `url(${IMAGES[currentIdx]})`,
+                        backgroundPosition: "center",
+                        backgroundSize: "cover",
+                        backgroundRepeat: "no-repeat",
+                    }}
+                />
+            </Link>
 
             {/* Grid Overlay */}
             <div
@@ -91,11 +149,7 @@ export default function Hero() {
                 {Array.from({ length: grid.cols * grid.rows }).map((_, i) => {
                     const col = i % grid.cols;
                     const row = Math.floor(i / grid.cols);
-                    
-                    // The secret sauce: 
-                    // We calculate the percentage position based on the grid index
-                    const xPerc = grid.cols > 1 ? (col / (grid.cols - 1)) * 100 : 0;
-                    const yPerc = grid.rows > 1 ? (row / (grid.rows - 1)) * 100 : 0;
+                    const coverStyle = getCoverStyle(IMAGES[nextIdx], col, row);
 
                     return (
                         <div
@@ -103,11 +157,10 @@ export default function Hero() {
                             className="sq w-full h-full"
                             style={{
                                 backgroundImage: `url(${IMAGES[nextIdx]})`,
-                                // Match the 'cover' behavior exactly
-                                backgroundSize: `${grid.cols * 100.1}% ${grid.rows * 100.1}%`,
-                                backgroundPosition: `${xPerc}% ${yPerc}%`,
+                                backgroundRepeat: "no-repeat",
+                                ...coverStyle,
                                 opacity: 0,
-                                transform: "scale(0)",
+                                clipPath: "inset(50%)",
                             }}
                         />
                     );

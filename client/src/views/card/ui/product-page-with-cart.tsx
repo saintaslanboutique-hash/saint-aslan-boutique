@@ -3,9 +3,10 @@
 import { useTranslations } from 'next-intl';
 import { useCallback } from 'react';
 import toast from 'react-hot-toast';
-import ProductPage from '@/src/entities/product/ui/product-page';
+
 import { useCartStore } from '../model/card.store';
-import type { Product } from '@/src/entities/product/model/model.types';
+import type { Product } from '@/src/entities/product/types/product.types';
+import ProductPage from '../../product/ui/product-page';
 
 type ProductWithId = Product & { _id?: string };
 

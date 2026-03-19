@@ -1,12 +1,13 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
-import { ShoppingBag } from 'lucide-react';
+import { useTranslations, useLocale } from 'next-intl';
+import { ShoppingBag, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCartStore } from '../model/card.store';
-import type { Product } from '@/src/entities/product/model/model.types';
+import type { Product } from '@/src/entities/product/types/product.types';
 
 type ProductWithId = Product & { _id?: string };
+type LocaleKey = keyof Product['name'];
 
 type AddToCartButtonProps = {
   product: ProductWithId;
@@ -25,6 +26,7 @@ export function AddToCartButton({
 }: AddToCartButtonProps) {
   const t = useTranslations('productPage');
   const tCart = useTranslations('cart');
+  const locale = useLocale() as LocaleKey;
   const addItem = useCartStore((s) => s.addItem);
   const isSyncing = useCartStore((s) => s.isSyncing);
 
@@ -32,7 +34,33 @@ export function AddToCartButton({
     const id = (product as { _id?: string })._id ?? (product as { id?: string }).id;
     if (!id) return;
     await addItem(product, quantity);
-    toast.success(tCart('addedToCart'));
+
+    const productName = product.name?.[locale] ?? product.name?.en ?? '';
+
+    toast.custom(
+      (toastInstance) => (
+        <div
+          className={`${
+            toastInstance.visible ? 'animate-enter' : 'animate-leave'
+          } flex items-center gap-3 bg-white border border-neutral-100 shadow-lg shadow-neutral-200/60 rounded-xl px-4 py-3 max-w-xs w-full font-host-grotesk`}
+        >
+          <div className="shrink-0 w-8 h-8 rounded-full bg-neutral-900 flex items-center justify-center">
+            <CheckCircle2 className="w-4 h-4 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-neutral-900 font-host-grotesk leading-tight">
+              {tCart('addedToCart')}
+            </p>
+            {productName && (
+              <p className="text-xs text-neutral-400 truncate mt-0.5 font-host-grotesk">
+                {productName}
+              </p>
+            )}
+          </div>
+        </div>
+      ),
+      { duration: 3000 }
+    );
   };
 
   const baseClass =

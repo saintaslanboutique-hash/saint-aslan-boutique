@@ -1,36 +1,47 @@
+'use client';
 
+import { getRoleNames, isAdmin, isSuperAdmin } from '@/src/entities/user/lib/auth.utils';
+import { User } from '@/src/entities/user/types/user.types';
+import { Check, List, Package, ShieldCheck, Users } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
-
-import { isAdmin, isSuperAdmin, getRoleNames } from '../../utils/auth.utils';
-
-
-import { Users, Package, BarChart3, Check, ShieldCheck } from 'lucide-react';
-import { userAPI } from '../../../entities/user/service/auth.api';
-import { User } from '../types/users.type';
 import useAuthStore from '../../../entities/user/model/auth.store';
+import { userAPI } from '../../../entities/user/service/auth.api';
+import { Button } from '@/components/ui/button';
+import { signOut } from 'next-auth/react';
 
 export default function AdminDashboard() {
-  const { user } = useAuthStore();
+  const { user, loading, initialize } = useAuthStore();
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
 
   useEffect(() => {
+    initialize();
+  }, [initialize]);
+
+  useEffect(() => {
+    if (!user || !isAdmin(user)) return;
     const fetchUsers = async () => {
       try {
         setLoadingUsers(true);
-        const response = await userAPI.getAllUsers();
-        setUsers(response.data);
+        const data = await userAPI.getAllUsers();
+        setUsers(data);
       } catch (error) {
         console.error('Failed to fetch users:', error);
       } finally {
         setLoadingUsers(false);
       }
     };
-
-    if (user && isAdmin(user)) {
-      fetchUsers();
-    }
+    fetchUsers();
   }, [user]);
+
+  if (loading) {
+    return (
+      <div className="container py-8 px-8 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-gray-500 text-lg">Loading...</div>
+      </div>
+    );
+  }
 
   if (!user || !isAdmin(user)) {
     return (
@@ -47,14 +58,21 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="container py-8 px-8 bg-white min-h-screen">
-      <div className="mb-8 mt-16">
-        <h1 className="text-5xl md:text-6xl font-serif font-light text-gray-900 mb-2">
+    <div className="container mx-auto py-8 px-8 bg-white min-h-screen ">
+      {/* Header */}
+      <div className="flex justify-between mt-16 mb-8">
+
+      <div className="w-full">
+        <h1 className="text-5xl md:text-6xl font-serif  mb-2">
           Admin Dashboard
         </h1>
         <p className="text-base text-gray-600 mt-2">
           Welcome, {user.username}! Your role: {getRoleNames(user.role)}
         </p>
+      </div>
+
+      {/* Logout Button */}
+      <Button variant="outline" className="mb-4" onClick={() => signOut({ callbackUrl: '/' })}>Logout</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -77,12 +95,51 @@ export default function AdminDashboard() {
               </div>
             </div>
             <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-              <Link to="/admin/users" className="text-gray-900 font-medium text-sm hover:text-gray-700 transition-colors">
-                View all users →
+              <Link 
+                href="/admin/users" 
+                className="text-gray-900 font-medium text-sm hover:text-gray-700 transition-colors group inline-flex items-center"
+              >
+                View all users
+                <span
+                  className="ml-2 inline-block transition-all duration-200 group-hover:translate-x-[5px] group-hover:w-[6px]"
+                  style={{ width: '5px' }}
+                >
+                  →
+                </span>
               </Link>
             </div>
           </div>
         )}
+
+        {/* System Stats */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-lg">
+          <div className="p-6">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
+                <List className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <div className="text-sm text-gray-600 mb-1">
+                  Category Management
+                </div>
+                <div className="text-xl font-semibold text-gray-900">
+                  Manage categories
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+          <Link href="/admin/categories" className="text-gray-900 font-medium text-sm hover:text-gray-700 transition-colors group inline-flex items-center">
+              View categories 
+              <span
+                  className="ml-2 inline-block transition-all duration-200 group-hover:translate-x-[5px] group-hover:w-[6px]"
+                  style={{ width: '5px' }}
+                >
+                  →
+                </span>
+            </Link>
+          </div>
+        </div>
 
         {/* Product Management - Admin and Super Admin */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-lg">
@@ -102,35 +159,19 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-            <Link to="/admin/products" className="text-gray-900 font-medium text-sm hover:text-gray-700 transition-colors">
-              View products →
+            <Link href="/admin/products" className="text-gray-900 font-medium text-sm hover:text-gray-700 transition-colors group inline-flex items-center">
+              View products 
+              <span
+                  className="ml-2 inline-block transition-all duration-200 group-hover:translate-x-[5px] group-hover:w-[6px]"
+                  style={{ width: '5px' }}
+                >
+                  →
+                </span>
             </Link>
           </div>
         </div>
 
-        {/* System Stats */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-lg">
-          <div className="p-6">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
-                <BarChart3 className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <div className="text-sm text-gray-600 mb-1">
-                  System Statistics
-                </div>
-                <div className="text-xl font-semibold text-gray-900">
-                  View analytics
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-            <span className="text-gray-500 font-medium text-sm cursor-default">
-              Coming soon
-            </span>
-          </div>
-        </div>
+        
       </div>
 
       {/* Role Information */}
@@ -170,7 +211,7 @@ export default function AdminDashboard() {
           <h3 className="text-2xl font-semibold text-gray-900">Admin Users</h3>
           {isSuperAdmin(user) && (
             <Link 
-              to="/admin/users" 
+              href="/admin/users" 
               className="text-gray-900 font-medium text-sm hover:text-gray-700 hover:underline transition-colors"
             >
               View all users →

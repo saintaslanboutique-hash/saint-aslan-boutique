@@ -16,7 +16,7 @@ const getProductsHandler = async (req, res) => {
 
 const postProductHandler = async (req, res) => {
     try {
-        const { name, price, description, image, images, colors, sizes, subcategoryId, quantity } = req.body;
+        const { name, price, description, image, images, variants, subcategoryId, quantity } = req.body;
         if (!name || typeof name !== 'object' || !name.az || !name.en || !name.ru || price == null || !description || typeof description !== 'object' || !description.az || !description.en || !description.ru || !subcategoryId || quantity == null) {
             return res.status(400).json({ message: 'Name, price, description, subcategoryId, and quantity are required' });
         }
@@ -35,8 +35,7 @@ const postProductHandler = async (req, res) => {
             quantity,
             ...(image !== undefined && { image }),
             ...(Array.isArray(images) && { images }),
-            ...(Array.isArray(colors) && { colors }),
-            ...(Array.isArray(sizes) && { sizes }),
+            ...(Array.isArray(variants) && { variants }),
         };
         const product = await Product.create(productData);
         res.status(201).json({ data: product });
@@ -64,7 +63,7 @@ const getProductByIdHandler = async (req, res) => {
 const updateProductHandler = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, price, description, image, images, colors, sizes, subcategoryId, quantity } = req.body;
+        const { name, price, description, image, images, variants, subcategoryId, quantity } = req.body;
         if (subcategoryId !== undefined) {
             if (!mongoose.Types.ObjectId.isValid(subcategoryId)) {
                 return res.status(400).json({ message: 'Invalid subcategoryId' });
@@ -80,8 +79,7 @@ const updateProductHandler = async (req, res) => {
         if (description !== undefined) update.description = description;
         if (image !== undefined) update.image = image;
         if (images !== undefined) update.images = Array.isArray(images) ? images : [];
-        if (colors !== undefined) update.colors = Array.isArray(colors) ? colors : [];
-        if (sizes !== undefined) update.sizes = Array.isArray(sizes) ? sizes : [];
+        if (variants !== undefined) update.variants = Array.isArray(variants) ? variants : [];
         if (subcategoryId !== undefined) update.subcategoryId = subcategoryId;
         if (quantity !== undefined) update.quantity = quantity;
         update.updatedAt = new Date();

@@ -1,11 +1,12 @@
-import AppShell from "@/app/app-shell";
+import Footer from "@/src/widgets/footer/footer";
+import Navbar from "@/src/widgets/navbar/navbar";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
     return (
         <div>
-            <AppShell>
-                {children}
-            </AppShell>
+            <Navbar />
+            {children}
+            <Footer />
         </div>
     )
 }

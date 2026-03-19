@@ -41,14 +41,11 @@ const productSchema = new mongoose.Schema({
         type: [String],
         required: false,
     },
-    colors:{
-        type: [String],
-        required: false,
-    },
-    sizes:{
-        type: [String],
-        required: false,
-    },
+    variants: [{
+        color: { type: String, required: true }, // e.g., "Red" or "#FF0000"
+        size: { type: String, required: true },  // e.g., "XL"
+        stock: { type: Number, default: 0, min: 0 }
+    }],
     subcategoryId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Subcategory',

@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import { signIn, signOut, getSession } from 'next-auth/react';
-import { authAPI } from '../service/auth.api';
+import { authAPI, userAPI } from '../service/auth.api';
 import { useCartStore } from '../../../views/card/model/card.store';
-import { User } from '@/src/entities/user/types/user.types';
+import { User, UserRole } from '@/src/entities/user/types/user.types';
+import { UserSchema } from '../model/user.schema';
 
 interface AuthState {
   user: User | null;
@@ -10,10 +11,22 @@ interface AuthState {
   isAuthenticated: boolean;
   loading: boolean;
 
+  // users management
+  users: User[];
+  usersLoading: boolean;
+  usersError: string | null;
+  changingRole: string | null;
+
   signin: (email: string, password: string) => Promise<void>;
   signup: (username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   initialize: () => Promise<void>;
+
+  patchUser: (data: UserSchema) => Promise<void>;
+
+  fetchUsers: () => Promise<void>;
+  changeUserRole: (userId: string, role: 'client' | 'admin') => Promise<void>;
+  clearUsersError: () => void;
 }
 
 const useAuthStore = create<AuthState>((set) => ({
@@ -21,6 +34,11 @@ const useAuthStore = create<AuthState>((set) => ({
   token: null,
   isAuthenticated: false,
   loading: true,
+
+  users: [],
+  usersLoading: false,
+  usersError: null,
+  changingRole: null,
 
   signup: async (username: string, email: string, password: string) => {
     set({ loading: true });
@@ -98,6 +116,49 @@ const useAuthStore = create<AuthState>((set) => ({
     set({ user: null, token: null, isAuthenticated: false });
     signOut({ redirect: false });
   },
+
+  fetchUsers: async () => {
+    set({ usersLoading: true, usersError: null });
+    try {
+      const users = await userAPI.getAllUsers();
+      set({ users });
+    } catch (err) {
+      set({ usersError: err instanceof Error ? err.message : 'Failed to fetch users' });
+    } finally {
+      set({ usersLoading: false });
+    }
+  },
+
+  changeUserRole: async (userId: string, role: 'client' | 'admin') => {
+    set({ changingRole: userId, usersError: null });
+    try {
+      const updated = await userAPI.changeUserRole(userId, role);
+      set((state) => ({
+        users: state.users.map((u) =>
+          u._id === userId ? { ...u, role: updated?.role ?? (role as UserRole) } : u
+        ),
+      }));
+    } catch (err) {
+      set({ usersError: err instanceof Error ? err.message : 'Failed to change role' });
+    } finally {
+      set({ changingRole: null });
+    }
+  },
+
+  patchUser: async (data: UserSchema) => {
+    set({ loading: true });
+    try {
+      const response = await userAPI.updateProfile(data);
+      const updatedUser: User = response.data ?? response;
+      set((state) => ({
+        user: state.user ? { ...state.user, ...updatedUser } : state.user,
+      }));
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  clearUsersError: () => set({ usersError: null }),
 
   initialize: async () => {
     try {

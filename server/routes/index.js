@@ -12,12 +12,15 @@ const authMiddleware = require("../middleware/auth.middleware");
 const productsRouter = require("./products.route");
 const categoryRouter = require("./category.route");
 const subcategoryRouter = require("./subcategory.route");
+const paymentRouter = require("./payment.route");
+const { callbackPayment } = require("../controllers/payment.controller");
 
 router.use("/api/auth", authRouter);
 router.use("/api/users", authMiddleware, userRouter);
-router.use("/cart", authMiddleware, cardRouter);
-// router.use("/accessories", accessoryRouter);
-// router.use("/bags", bagRouter);
+// Callback is public — called by OderoPay servers, not the client
+router.post("/api/pay/callback", callbackPayment);
+router.use("/api/pay", authMiddleware, paymentRouter);
+router.use("/api/cart", authMiddleware, cardRouter);
 router.use("/orders", authMiddleware, orderRouter);
 router.use("/api/products", productsRouter);
 router.use("/api/categories", categoryRouter);

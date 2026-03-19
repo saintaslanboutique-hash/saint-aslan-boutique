@@ -34,7 +34,7 @@ export default async function proxy(request: NextRequest) {
   });
 
   if (token && isAuthPage) {
-    return NextResponse.redirect(new URL(`/${locale}`, request.url));
+    return NextResponse.redirect(new URL(`/${locale}/profile`, request.url));
   }
 
   if (!token && isProtectedPage) {

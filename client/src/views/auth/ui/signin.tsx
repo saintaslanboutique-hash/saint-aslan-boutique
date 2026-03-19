@@ -32,7 +32,7 @@ export default function Signin() {
     try {
       await signin(data.email, data.password);
       toast.success('Signed in successfully! Welcome back');
-      navigate.push('/');
+      navigate.push('/products');
     } catch (err: unknown) {
       console.error('Sign in error:', err);
       let errorMessage = 'Sign in failed';

@@ -16,12 +16,12 @@ export interface User {
     avatarUrl?: string;
     isActive?: string;
     __v?: number;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 export interface AuthProps{
-    name?: string;
+    username?: string;
     email: string;
     password: string;
     image?: string;

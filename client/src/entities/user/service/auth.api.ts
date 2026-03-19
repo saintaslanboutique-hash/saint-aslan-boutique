@@ -1,26 +1,8 @@
 
-import { UserRole } from '@/src/entities/user/types/user.types';
-import axios from 'axios';
 
+import { User, UserRole } from '@/src/entities/user/types/user.types';
+import { api } from '@/src/shared/api/api-instanse';
 
-// Use environment variable if available, otherwise fallback to localhost
-export const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:5555';
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add token to requests if available
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
 
 export const authAPI = {
   register: async (username: string, email: string, password: string) => {
@@ -92,13 +74,15 @@ export const userAPI = {
     const response = await api.delete('/users/me');
     return response.data;
   },
-  getAllUsers: async () => {
+  getAllUsers: async (): Promise<User[]> => {
     const response = await api.get('/users/all');
-    return response.data;
+    // Server returns { data: User[] }
+    return response.data?.data ?? [];
   },
-  changeUserRole: async (userId: string, role: UserRole) => {
-    const response = await api.patch(`/users/role`, { userId, role });
-    return response.data;
+  changeUserRole: async (userId: string, role: UserRole): Promise<User> => {
+    const response = await api.patch('/users/role', { userId, role });
+    // Server returns { message, data: User }
+    return response.data?.data ?? response.data;
   },
 };
 
