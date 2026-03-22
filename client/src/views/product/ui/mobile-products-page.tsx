@@ -1,20 +1,14 @@
 'use client';
 
 import { useEffect, useCallback, useState, useMemo } from 'react';
-import { Plus, SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
 import { useLocale } from 'next-intl';
 import { useProductStore } from '@/src/entities/product/model/product.store';
 import { useCartStore } from '@/src/views/card/model/card.store';
 import { useCategoryStore } from '@/src/entities/categories/model/categories.store';
 import { useSubcategoryStore } from '@/src/entities/subcategories/model/subcategories.store';
-import ProductCard from './product-card';
-import { isAdmin } from '@/src/entities/user/lib/auth.utils';
-import useAuthStore from '@/src/entities/user/model/auth.store';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import MobileProductCard from './mobile-product-card';
 import { useSelectedProductStore } from '@/src/entities/product/model/selected-product';
-import { useMobile } from '@/src/shared/hooks/use-mobile';
-import MobileProductsPage from './mobile-products-page';
 
 type SortOption = 'default' | 'price-asc' | 'price-desc' | 'newest';
 
@@ -34,16 +28,14 @@ function shuffleArray<T>(arr: T[]): T[] {
   return result;
 }
 
-export default function ProductsPage() {
-  const { user } = useAuthStore();
-  const isMobile = useMobile();
-
+export default function MobileProductsPage() {
   const locale = useLocale() as 'az' | 'en' | 'ru';
   const { products, isLoading, error, fetchProducts } = useProductStore();
   const addItem = useCartStore((s) => s.addItem);
   const { categories, fetchCategories } = useCategoryStore();
   const { subcategories, fetchSubcategories } = useSubcategoryStore();
-  const { selectedCategory, selectedSubCategory, setSelectedCategory, setSelectedSubCategory } = useSelectedProductStore();
+  const { selectedCategory, selectedSubCategory, setSelectedCategory, setSelectedSubCategory } =
+    useSelectedProductStore();
 
   const activeCategory = selectedCategory ?? 'default';
   const activeSubcategory = selectedSubCategory ?? null;
@@ -57,15 +49,13 @@ export default function ProductsPage() {
     fetchCategories();
   }, [fetchProducts, fetchCategories]);
 
-  // Fetch subcategories when a category is already selected (e.g. page re-mount)
   useEffect(() => {
     if (selectedCategory) {
       fetchSubcategories(selectedCategory);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
 
-  // Recomputed whenever shuffleKey increments (user switches to Default) or products load
   const shuffledProducts = useMemo(
     () => (products.length > 0 ? shuffleArray(products) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -86,9 +76,12 @@ export default function ProductsPage() {
     [fetchSubcategories, setSelectedCategory, setSelectedSubCategory]
   );
 
-  const handleSubcategorySelect = useCallback((subId: string) => {
-    setSelectedSubCategory(activeSubcategory === subId ? null : subId);
-  }, [activeSubcategory, setSelectedSubCategory]);
+  const handleSubcategorySelect = useCallback(
+    (subId: string) => {
+      setSelectedSubCategory(activeSubcategory === subId ? null : subId);
+    },
+    [activeSubcategory, setSelectedSubCategory]
+  );
 
   const onAddToCart = useCallback(
     async (product: Parameters<typeof addItem>[0]) => {
@@ -123,23 +116,19 @@ export default function ProductsPage() {
   const showSubcategories =
     activeCategory !== 'default' && subcategories.length > 0;
 
-  if (isMobile) return <MobileProductsPage />;
-
   return (
     <div className="min-h-screen bg-white">
-      {/* Sticky top bar */}
       <div className="sticky top-0 z-20 bg-white border-b border-neutral-200">
-        {/* Row 1: left spacer | category tabs | filter */}
         <div className="w-full px-3 h-12 flex items-center justify-between gap-2">
-          {/* Center: category pills */}
           <div className="flex-1 flex items-center overflow-x-auto scrollbar-none">
             <button
               type="button"
               onClick={() => handleCategorySelect('default')}
-              className={`shrink-0 px-3 py-1 text-xs font-semibold tracking-widest uppercase transition-colors whitespace-nowrap ${activeCategory === 'default'
-                ? 'text-black border-b-2 border-black'
-                : 'text-neutral-400 hover:text-neutral-700'
-                }`}
+              className={`shrink-0 px-3 py-1 text-xs font-semibold tracking-widest uppercase transition-colors whitespace-nowrap ${
+                activeCategory === 'default'
+                  ? 'text-black border-b-2 border-black'
+                  : 'text-neutral-400 hover:text-neutral-700'
+              }`}
             >
               All
             </button>
@@ -148,26 +137,18 @@ export default function ProductsPage() {
                 key={cat._id}
                 type="button"
                 onClick={() => handleCategorySelect(cat._id!)}
-                className={`shrink-0 px-3 py-1 text-xs font-semibold tracking-widest uppercase transition-colors whitespace-nowrap ${activeCategory === cat._id
-                  ? 'text-black border-b-2 border-black'
-                  : 'text-neutral-400 hover:text-neutral-700'
-                  }`}
+                className={`shrink-0 px-3 py-1 text-xs font-semibold tracking-widest uppercase transition-colors whitespace-nowrap ${
+                  activeCategory === cat._id
+                    ? 'text-black border-b-2 border-black'
+                    : 'text-neutral-400 hover:text-neutral-700'
+                }`}
               >
                 {cat.name[locale]}
               </button>
             ))}
           </div>
 
-          {/* Right: sort */}
-          <div className="w-24 shrink-0 flex justify-end relative gap-4">
-            {isAdmin(user) ? (
-              <Link href="/admin/products/add">
-                <Button variant="outline" className="flex items-center gap-1.5 text-xs uppercase bg-black text-white px-3 hover:bg-black/80 hover:text-white rounded-none cursor-pointer">
-                  <Plus className="w-3.5 h-3.5" strokeWidth={1.8} />
-                  Add Product
-                </Button>
-              </Link>
-            ) : null}
+          <div className="shrink-0 flex justify-end relative">
             <button
               type="button"
               onClick={() => setSortOpen((v) => !v)}
@@ -187,8 +168,9 @@ export default function ProductsPage() {
                       setSort(key);
                       setSortOpen(false);
                     }}
-                    className={`w-full text-left px-4 py-2.5 text-xs font-host-grotesk hover:bg-neutral-50 transition-colors ${sort === key ? 'font-bold text-black' : 'text-neutral-600'
-                      }`}
+                    className={`w-full text-left px-4 py-2.5 text-xs font-host-grotesk hover:bg-neutral-50 transition-colors ${
+                      sort === key ? 'font-bold text-black' : 'text-neutral-600'
+                    }`}
                   >
                     {SORT_LABELS[key]}
                   </button>
@@ -198,7 +180,6 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        {/* Row 2: subcategory chips */}
         {showSubcategories && (
           <div className="w-full px-3 h-9 flex items-center overflow-x-auto scrollbar-none gap-0 border-t border-neutral-100">
             {subcategories.map((sub) => (
@@ -206,10 +187,11 @@ export default function ProductsPage() {
                 key={sub._id}
                 type="button"
                 onClick={() => handleSubcategorySelect(sub._id!)}
-                className={`shrink-0 px-3 py-0.5 text-xs tracking-widest uppercase transition-colors whitespace-nowrap ${activeSubcategory === sub._id
-                  ? 'text-black font-semibold border-b-2 border-black'
-                  : 'text-neutral-400 hover:text-neutral-700 font-medium'
-                  }`}
+                className={`shrink-0 px-3 py-0.5 text-xs tracking-widest uppercase transition-colors whitespace-nowrap ${
+                  activeSubcategory === sub._id
+                    ? 'text-black font-semibold border-b-2 border-black'
+                    : 'text-neutral-400 hover:text-neutral-700 font-medium'
+                }`}
               >
                 {sub.name[locale]}
               </button>
@@ -218,7 +200,6 @@ export default function ProductsPage() {
         )}
       </div>
 
-      {/* Close sort dropdown on outside click */}
       {sortOpen && (
         <div
           className="fixed inset-0 z-10"
@@ -226,10 +207,9 @@ export default function ProductsPage() {
         />
       )}
 
-      {/* Content */}
       <div className="w-full px-3 py-6">
         {isLoading && products.length === 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-10">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-10">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="flex flex-col w-full animate-pulse">
                 <div className="aspect-3/4 w-full bg-neutral-100" />
@@ -255,9 +235,9 @@ export default function ProductsPage() {
         )}
 
         {sortedProducts.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-10">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-10">
             {sortedProducts.map((product) => (
-              <ProductCard
+              <MobileProductCard
                 key={product._id}
                 product={product}
                 onAddToCart={onAddToCart}

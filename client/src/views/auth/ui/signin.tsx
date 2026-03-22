@@ -10,6 +10,7 @@ import { SigninSchema, signinSchema } from '../../../entities/user/model/auth.sc
 import Link from 'next/link';
 import useAuthStore from '../../../entities/user/model/auth.store';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 
 
 export default function Signin() {

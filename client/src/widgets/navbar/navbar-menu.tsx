@@ -11,6 +11,7 @@ import { useSubcategoryStore } from "@/src/entities/subcategories/model/subcateg
 import type { SubcategoryName } from "@/src/entities/subcategories/types/subcategories.types";
 import { useMobile } from "@/src/shared/hooks/use-mobile";
 import { useLocale } from "next-intl";
+import { X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -457,6 +458,17 @@ export default function NavbarMenu() {
             </nav>
 
             <div className="menu-overlay fixed inset-0 w-screen h-svh overflow-hidden bg-white z-50 text-black [clip-path:polygon(0%_0%,100%_0%,100%_0%,0%_0%)]">
+                <button
+                    type="button"
+                    aria-label="Close menu"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        closeMenu();
+                    }}
+                    className="fixed top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))] z-70 p-2 -m-2 text-black/60 hover:text-black transition-colors"
+                >
+                    <X className="h-7 w-7" strokeWidth={1.25} />
+                </button>
                 <div
                     ref={menuContentRef}
                     className="relative w-full h-full flex content-center items-center origin-left-bottom will-change-[transform,opacity]"

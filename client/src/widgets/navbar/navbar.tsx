@@ -9,9 +9,12 @@ import { useEffect, useMemo } from "react";
 import NavbarMenu from "./navbar-menu";
 import { useSelectedProductStore } from "@/src/entities/product/model/selected-product";
 import { useCategoryStore } from "@/src/entities/categories/model/categories.store";
+import { useMobile } from "@/src/shared/hooks/use-mobile";
+import MobileNavbar from "./mobile-navbar";
 
 export default function Navbar() {
     const { items } = useCartStore();
+    const isMobile = useMobile();
     const { user, initialize } = useAuthStore();
     const { selectedCategory } = useSelectedProductStore();
     const { categories } = useCategoryStore();
@@ -24,6 +27,8 @@ export default function Navbar() {
         const selected = categories.find((c) => c._id === selectedCategory);
         return selected?.name["en"] || Object.values(selected?.name ?? {})[0] || "Products";
     }, [categories, selectedCategory]);
+
+    if (isMobile) return <MobileNavbar />;
 
     
     return (

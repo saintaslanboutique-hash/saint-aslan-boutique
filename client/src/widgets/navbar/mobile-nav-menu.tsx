@@ -5,23 +5,15 @@ import gsap from "gsap";
 import { useRef, useState, useCallback, useEffect, useMemo, useTransition } from "react";
 
 import { usePathname, useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
+import { X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import shoes from "@/public/shoes.jpg";
-import dress from "@/public/dress.jpg";
-import jacket from "@/public/jacket.jpg";
-import trousers from "@/public/trousers.jpg";
-import contact from "@/public/contact.jpg";
+import { useCategoryStore } from "@/src/entities/categories/model/categories.store";
+import type { CategoryName } from "@/src/entities/categories/types/categories.type";
+import { useSelectedProductStore } from "@/src/entities/product/model/selected-product";
+import { useSubcategoryStore } from "@/src/entities/subcategories/model/subcategories.store";
 
-const menuLinks = [
-    { name: "Shoes", href: "/shoes", page: "shoes", img: shoes },
-    { name: "Dress", href: "/dress", page: "dress", img: dress },
-    { name: "Jacket", href: "/jacket", page: "jacket", img: jacket },
-    { name: "Trousers", href: "/trousers", page: "trousers", img: trousers },
-    { name: "Contact", href: "/contact", page: "contact", img: contact },
-];
-
-type Page = "shoes" | "dress" | "jacket" | "trousers" | "contact";
 
 const lockScroll = () => {
     document.body.style.overflow = "hidden";
@@ -38,6 +30,33 @@ const unlockScroll = () => {
 export default function MobileNavMenu() {
     const pathname = usePathname();
     const router = useRouter();
+    const locale = useLocale() as keyof CategoryName;
+    const { categories, fetchCategories } = useCategoryStore();
+    const { subcategories, fetchSubcategories } = useSubcategoryStore();
+    const { selectedCategory, setSelectedCategory, setSelectedSubCategory } =
+        useSelectedProductStore();
+
+    const menuLinks = useMemo(
+        () =>
+            categories.map((c) => ({
+                name: c.name[locale] ?? c.name.en,
+                href: `/products`,
+                page: c._id,
+                img: c.image,
+            })),
+        [categories, locale]
+    );
+
+    const activePage = useMemo(() => {
+        if (selectedCategory && menuLinks.some((l) => l.page === selectedCategory))
+            return selectedCategory;
+        return menuLinks[0]?.page ?? "";
+    }, [selectedCategory, menuLinks]);
+
+    const filteredSubcategories = useMemo(
+        () => subcategories.filter((s) => s.categoryId === activePage),
+        [subcategories, activePage]
+    );
 
     const menuContentRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -49,10 +68,10 @@ export default function MobileNavMenu() {
     const [isPending, startTransition] = useTransition();
     const isNavigatingRef = useRef(false);
 
-    const activePage = useMemo(
-        () => (menuLinks.find(l => l.href === pathname)?.page ?? "shoes") as Page,
-        [pathname]
-    );
+    useEffect(() => {
+        fetchCategories();
+        fetchSubcategories();
+    }, [fetchCategories, fetchSubcategories]);
 
     useGSAP(() => {
         containerRef.current = document.querySelector(".page-container") as HTMLDivElement;
@@ -111,12 +130,15 @@ export default function MobileNavMenu() {
         };
     }, []);
 
-    const handleLinkClick = useCallback((e: React.MouseEvent, href: string) => {
-        e.preventDefault();
-        if (isAnimatingRef.current) return;
-        isAnimatingRef.current = true;
+    const handleLinkClick = useCallback(
+        (e: React.MouseEvent, page: string, href: string) => {
+            e.preventDefault();
+            if (isAnimatingRef.current) return;
+            isAnimatingRef.current = true;
 
-        unlockScroll();
+            setSelectedCategory(page);
+            setSelectedSubCategory(null);
+            unlockScroll();
 
         gsap.to(".mobile-menu-link-item", {
             y: "120%", opacity: 0, duration: 0.4, stagger: 0.05, ease: "power2.in",
@@ -145,7 +167,9 @@ export default function MobileNavMenu() {
                 });
             },
         });
-    }, [router]);
+        },
+        [router, setSelectedCategory, setSelectedSubCategory]
+    );
 
     const openMenu = useCallback(() => {
         if (isAnimatingRef.current || isMenuOpen) return;
@@ -227,6 +251,17 @@ export default function MobileNavMenu() {
             </nav>
 
             <div className="mobile-menu-overlay fixed inset-0 w-screen h-svh overflow-hidden bg-white z-50 text-black [clip-path:polygon(0%_0%,100%_0%,100%_0%,0%_0%)]">
+                <button
+                    type="button"
+                    aria-label="Close menu"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        closeMenu();
+                    }}
+                    className="fixed top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))] z-70 p-2 -m-2 text-black/60 hover:text-black transition-colors"
+                >
+                    <X className="h-7 w-7" strokeWidth={1.25} />
+                </button>
                 <div
                     ref={menuContentRef}
                     className="relative w-full h-full flex flex-col justify-between origin-left-bottom will-change-[transform,opacity]"
@@ -237,16 +272,25 @@ export default function MobileNavMenu() {
                         {menuLinks.map((link) => (
                             <div
                                 key={link.page}
-                                className="absolute inset-0 transition-opacity duration-500"
-                                style={{ opacity: activePage === link.page ? 0.08 : 0 }}
+                                className="absolute inset-0 transition-opacity duration-700 pointer-events-none"
+                                style={{
+                                    opacity:
+                                        activePage === link.page
+                                            ? filteredSubcategories.length > 0
+                                                ? 0.12
+                                                : 1
+                                            : 0,
+                                }}
                             >
-                                <Image
-                                    src={link.img}
-                                    alt={link.name}
-                                    fill
-                                    className="object-cover"
-                                    sizes="100vw"
-                                />
+                                {link.img && (
+                                    <Image
+                                        src={link.img}
+                                        alt={link.name}
+                                        fill
+                                        className="object-cover"
+                                        sizes="100vw"
+                                    />
+                                )}
                             </div>
                         ))}
                     </div>
@@ -254,12 +298,12 @@ export default function MobileNavMenu() {
                     {/* Nav links */}
                     <div className="relative z-10 flex flex-col justify-center flex-1 px-8 pt-24 gap-2 select-none">
                         {menuLinks.map((link) => {
-                            const isActive = pathname === link.href;
+                            const isActive = activePage === link.page;
                             return (
                                 <Link
-                                    key={link.name}
+                                    key={link.page}
                                     href={link.href}
-                                    onClick={(e) => handleLinkClick(e, link.href)}
+                                    onClick={(e) => handleLinkClick(e, link.page, link.href)}
                                     className="mobile-menu-link-item inline-flex items-center gap-3 will-change-transform py-1"
                                     style={{ transform: "translateY(120%)", opacity: 0 }}
                                 >
