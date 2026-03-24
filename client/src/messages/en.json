@@ -1,4 +1,7 @@
 {
+    "hero": {
+        "button": "TAP TO SHOP NOW"
+    },
     "cart": {
         "addedToCart": "Added to cart",
         "title": "Your cart",

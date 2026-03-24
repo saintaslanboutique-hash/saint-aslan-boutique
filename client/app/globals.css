@@ -150,3 +150,32 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+@keyframes mobile-hero-cta-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-12px);
+  }
+  55% {
+    transform: translateY(-4px);
+  }
+  70% {
+    transform: translateY(-8px);
+  }
+  85% {
+    transform: translateY(-2px);
+  }
+}
+
+.mobile-hero-cta {
+  animation: mobile-hero-cta-bounce 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-hero-cta {
+    animation: none;
+  }
+}
