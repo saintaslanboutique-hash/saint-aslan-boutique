@@ -3,6 +3,8 @@
 import { useRef, useCallback } from "react";
 import gsap from "gsap";
 import { usePathname } from "next/navigation";
+import { useMobile } from "@/src/shared/hooks/use-mobile";
+import MobileFooter from "./mobile-footer";
 
 export default function Footer() {
     const footerRef = useRef<HTMLElement>(null);
@@ -10,7 +12,7 @@ export default function Footer() {
     const inRef = useRef<HTMLDivElement>(null);
     const touchRef = useRef<HTMLDivElement>(null);
     const emailRef = useRef<HTMLAnchorElement>(null);
-
+    const isMobile = useMobile();
     const pathname = usePathname();
 
     const handleMouseEnter = useCallback(() => {
@@ -77,6 +79,7 @@ export default function Footer() {
     if (pathname === "/contact") {
         return null;
     }
+    if (isMobile) return <MobileFooter />;
 
     return (
         <footer
@@ -109,11 +112,11 @@ export default function Footer() {
                         </svg>
                     </div>
 
-                    <a ref={emailRef} href="mailto:saint.aslan@gmail.com" className="hidden sm:flex flex-col pl-6 border py-20  w-full">
+                    <a ref={emailRef} href="mailto:saintaslanboutique@gmail.com" className="hidden sm:flex flex-col pl-6 border py-20  w-full">
                         <p
                             className=" md:text-2xl"
                         >
-                            saint.aslan@gmail.com
+                            saintaslanboutique@gmail.com
                         </p>
                     </a>
                 </div>
@@ -130,11 +133,11 @@ export default function Footer() {
                         </g>
                     </svg>
                 </div>
-                <a href="mailto:faik.hasanov05@gmail.com" className="sm:hidden bg-white flex flex-col pl-6 border py-10 mr-10 w-full">
+                <a href="mailto:saintaslanboutique@gmail.com" className="sm:hidden bg-white flex flex-col pl-6 border py-10 mr-10 w-full">
                     <p
                         className=" md:text-2xl text-black hover:text-zinc-400 transition-colors"
                     >
-                        faik.hasanov05@gmail.com
+                        saintaslanboutique@gmail.com
                     </p>
                 </a>
             </div>
