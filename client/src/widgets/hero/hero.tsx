@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 import Link from "next/link";
+import { useMobile } from "@/src/shared/hooks/use-mobile";
+import MobileHero from "./mobile-hero";
 
 const IMAGES = ["/hero_22.jpg", "/hero_33.jpg"];
 const SQUARE_SIZE = 200;
@@ -10,9 +12,8 @@ const INTERVAL = 5000;
 
 type ImageNaturalSize = { width: number; height: number };
 
-export default function Hero() {
+function DesktopHero() {
     const containerRef = useRef<HTMLDivElement>(null);
-
     const [currentIdx, setCurrentIdx] = useState(0);
     const [nextIdx, setNextIdx] = useState(1);
     const [grid, setGrid] = useState({ cols: 0, rows: 0, width: 0, height: 0 });
@@ -168,4 +169,10 @@ export default function Hero() {
             </div>
         </div>
     );
+}
+
+export default function Hero() {
+    const isMobile = useMobile();
+    if (isMobile) return <MobileHero />;
+    return <DesktopHero />;
 }

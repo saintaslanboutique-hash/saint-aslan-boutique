@@ -1,9 +1,8 @@
 "use client";
+
 import { useCategoryStore } from "@/src/entities/categories/model/categories.store";
 import { Category, CategoryName } from "@/src/entities/categories/types/categories.type";
 import { useSelectedProductStore } from "@/src/entities/product/model/selected-product";
-import { useMobile } from "@/src/shared/hooks/use-mobile";
-import MobileShopify from "./mobile-shopify";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { useLocale } from "next-intl";
@@ -12,14 +11,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useRef } from "react";
 
-export default function Shopify() {
-    const isMobile = useMobile();
-    if (isMobile) return <MobileShopify />;
-
-    return <DesktopShopify />;
-}
-
-function DesktopShopify() {
+export default function MobileShopify() {
     const gridRef = useRef<HTMLDivElement>(null);
     const { categories } = useCategoryStore();
     const locale = useLocale() as keyof CategoryName;
@@ -32,12 +24,13 @@ function DesktopShopify() {
     const randomCategories = useMemo(() => shuffledCategories.slice(0, 4), [shuffledCategories]);
 
     const menuLinks = useMemo(
-        () => randomCategories.map((c) => ({
-            name: c.name[locale] ?? c.name.en,
-            href: `/products`,
-            page: c._id,
-            img: c.image,
-        })),
+        () =>
+            randomCategories.map((c) => ({
+                name: c.name[locale] ?? c.name.en,
+                href: `/products`,
+                page: c._id,
+                img: c.image,
+            })),
         [randomCategories, locale]
     );
 
@@ -46,26 +39,32 @@ function DesktopShopify() {
         router.push(href);
     }, [router]);
 
-    useGSAP(() => {
-        if (!gridRef.current) return;
+    useGSAP(
+        () => {
+            if (!gridRef.current) return;
 
-        const cells = gridRef.current.querySelectorAll<HTMLElement>(".shopify-cell");
+            const cells = gridRef.current.querySelectorAll<HTMLElement>(".shopify-cell");
 
-        gsap.set(cells, { opacity: 0, scale: 1.08, filter: "blur(12px)" });
+            gsap.set(cells, { opacity: 0, scale: 1.08, filter: "blur(12px)" });
 
-        gsap.to(cells, {
-            opacity: 1,
-            scale: 1,
-            filter: "blur(0px)",
-            duration: 0.9,
-            ease: "power3.out",
-            stagger: 0.18,
-        });
-    }, { scope: gridRef, dependencies: [menuLinks] });
+            gsap.to(cells, {
+                opacity: 1,
+                scale: 1,
+                filter: "blur(0px)",
+                duration: 0.9,
+                ease: "power3.out",
+                stagger: 0.18,
+            });
+        },
+        { scope: gridRef, dependencies: [menuLinks] }
+    );
 
     return (
         <section className="w-full overflow-hidden">
-            <div ref={gridRef} className="grid grid-cols-2 grid-rows-2 w-full h-[200vh]">
+            <div
+                ref={gridRef}
+                className="grid w-full grid-cols-1 grid-rows-4 h-[200vh]"
+            >
                 {menuLinks.map((category) => (
                     <Link
                         key={category.page}
@@ -74,7 +73,7 @@ function DesktopShopify() {
                             setSelectedCategory(category.page as string);
                             handleLinkClick(e, category.href);
                         }}
-                        className="shopify-cell group relative overflow-hidden"
+                        className="shopify-cell group relative min-h-0 overflow-hidden"
                     >
                         <Image
                             src={category.img}
@@ -82,7 +81,7 @@ function DesktopShopify() {
                             fill
                             className="object-cover h-full w-full"
                         />
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/50 backdrop-blur-sm">
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-300 bg-white/50 backdrop-blur-sm">
                             <span className="text-black text-xl font-semibold tracking-widest uppercase">
                                 {category.name}
                             </span>
