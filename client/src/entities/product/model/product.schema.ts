@@ -21,6 +21,7 @@ export const productSchema = z.object({
   variants: z.array(variantSchema).optional(),
   subcategoryId: z.string().min(1, "Subcategory is required"),
   quantity: z.number().min(0, "Quantity must be 0 or more"),
+  sale: z.number().min(0, "Min 0%").max(100, "Max 100%"),
   preOrder: z.boolean().optional(),
   currency: z.string().optional(),
 });

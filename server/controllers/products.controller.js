@@ -2,6 +2,15 @@ const Product = require('../model/products.model');
 const Subcategory = require('../model/subcategory.model');
 const mongoose = require('mongoose');
 
+const parseSale = (value) => {
+    if (value === undefined || value === null) return { ok: true, sale: undefined };
+    const n = Number(value);
+    if (Number.isNaN(n) || n < 0 || n > 100) {
+        return { ok: false, message: 'sale must be a number between 0 and 100' };
+    }
+    return { ok: true, sale: n };
+};
+
 const getProductsHandler = async (req, res) => {
     try {
         const { subcategoryId } = req.query;
@@ -16,9 +25,13 @@ const getProductsHandler = async (req, res) => {
 
 const postProductHandler = async (req, res) => {
     try {
-        const { name, price, description, image, images, variants, subcategoryId, quantity } = req.body;
+        const { name, price, description, image, images, variants, subcategoryId, quantity, sale } = req.body;
         if (!name || typeof name !== 'object' || !name.az || !name.en || !name.ru || price == null || !description || typeof description !== 'object' || !description.az || !description.en || !description.ru || !subcategoryId || quantity == null) {
             return res.status(400).json({ message: 'Name, price, description, subcategoryId, and quantity are required' });
+        }
+        const saleParsed = parseSale(sale);
+        if (!saleParsed.ok) {
+            return res.status(400).json({ message: saleParsed.message });
         }
         if (!mongoose.Types.ObjectId.isValid(subcategoryId)) {
             return res.status(400).json({ message: 'Invalid subcategoryId' });
@@ -33,6 +46,7 @@ const postProductHandler = async (req, res) => {
             description,
             subcategoryId,
             quantity,
+            ...(saleParsed.sale !== undefined && { sale: saleParsed.sale }),
             ...(image !== undefined && { image }),
             ...(Array.isArray(images) && { images }),
             ...(Array.isArray(variants) && { variants }),
@@ -63,7 +77,7 @@ const getProductByIdHandler = async (req, res) => {
 const updateProductHandler = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, price, description, image, images, variants, subcategoryId, quantity } = req.body;
+        const { name, price, description, image, images, variants, subcategoryId, quantity, sale } = req.body;
         if (subcategoryId !== undefined) {
             if (!mongoose.Types.ObjectId.isValid(subcategoryId)) {
                 return res.status(400).json({ message: 'Invalid subcategoryId' });
@@ -82,6 +96,17 @@ const updateProductHandler = async (req, res) => {
         if (variants !== undefined) update.variants = Array.isArray(variants) ? variants : [];
         if (subcategoryId !== undefined) update.subcategoryId = subcategoryId;
         if (quantity !== undefined) update.quantity = quantity;
+        if (sale !== undefined) {
+            if (sale === null) {
+                update.sale = 0;
+            } else {
+                const saleParsed = parseSale(sale);
+                if (!saleParsed.ok) {
+                    return res.status(400).json({ message: saleParsed.message });
+                }
+                update.sale = saleParsed.sale;
+            }
+        }
         update.updatedAt = new Date();
         const product = await Product.findByIdAndUpdate(id, update, { new: true });
         if (!product) {

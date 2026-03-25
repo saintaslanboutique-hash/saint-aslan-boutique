@@ -55,6 +55,14 @@ const productSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    sale:{
+        type: Number,
+        required: false,
+
+        min: 0,
+        max: 100,
+        default: 0,
+    },
     createdAt: {
         type: Date,
         default: Date.now,

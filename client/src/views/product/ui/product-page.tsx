@@ -8,7 +8,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useProductStore } from '@/src/entities/product/model/product.store';
-import type { Product } from '@/src/entities/product/types/product.types';
+import {
+  type Product,
+  getDiscountedUnitPrice,
+  isProductOnSale,
+} from '@/src/entities/product/types/product.types';
 
 type ProductWithId = Product & { _id?: string };
 type LocaleKey = keyof Product['name'];
@@ -137,6 +141,10 @@ export default function ProductPage({
     return new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2 }).format(price);
   };
 
+  const currency = product?.currency ?? 'AZN';
+  const onSale = product ? isProductOnSale(product) : false;
+  const unitPrice = product ? getDiscountedUnitPrice(product.price, product.sale) : 0;
+
   const toggleAccordion = (key: string) => {
     setOpenAccordion((prev) => (prev === key ? null : key));
   };
@@ -228,6 +236,13 @@ export default function ProductPage({
             className="relative flex-1 overflow-hidden bg-[#f5f5f3]"
             style={{ aspectRatio: '3/4' }}
           >
+            {product && onSale && (
+              <div className="absolute top-3 left-3 z-10 pointer-events-none">
+                <span className="bg-red-600 text-white text-[10px] font-bold tracking-widest uppercase px-2 py-1">
+                  −{Math.round(product.sale ?? 0)}%
+                </span>
+              </div>
+            )}
             <AnimatePresence mode="wait">
               <motion.div
                 key={selectedImageIndex}
@@ -300,9 +315,20 @@ export default function ProductPage({
 
           {/* Price */}
           <div className="mb-1">
-            <span className="text-[18px] font-medium tracking-wide text-neutral-900">
-              {formatPrice(product.price)} {product.currency ?? 'AZN'}
-            </span>
+            {onSale ? (
+              <span className="inline-flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <span className="text-[15px] text-neutral-400 line-through tracking-wide tabular-nums">
+                  {formatPrice(product.price)} {currency}
+                </span>
+                <span className="text-[18px] font-medium tracking-wide text-neutral-900 tabular-nums">
+                  {formatPrice(unitPrice)} {currency}
+                </span>
+              </span>
+            ) : (
+              <span className="text-[18px] font-medium tracking-wide text-neutral-900 tabular-nums">
+                {formatPrice(product.price)} {currency}
+              </span>
+            )}
           </div>
           <p className="text-[11px] text-neutral-400 mb-5">{t('taxIncluded')}</p>
 
@@ -414,8 +440,19 @@ export default function ProductPage({
           >
             <span>{inStock ? t('addToCart') : 'OUT OF STOCK'}</span>
             {inStock && (
-              <span className="text-[13px] font-medium tracking-wide normal-case">
-                {formatPrice(product.price)} {product.currency ?? 'AZN'}
+              <span className="text-[13px] font-medium tracking-wide normal-case tabular-nums">
+                {onSale ? (
+                  <>
+                    <span className="text-neutral-400 line-through mr-2">
+                      {formatPrice(product.price)} {currency}
+                    </span>
+                    {formatPrice(unitPrice)} {currency}
+                  </>
+                ) : (
+                  <>
+                    {formatPrice(product.price)} {currency}
+                  </>
+                )}
               </span>
             )}
           </motion.button>

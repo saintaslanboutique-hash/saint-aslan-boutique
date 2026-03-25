@@ -21,12 +21,16 @@ import {
   Ruler,
   BarChart2,
   Upload,
+  Percent,
 } from "lucide-react";
 
 import CloudinaryUploadWidget from "@/src/widgets/cloudinary/cloudinary-upload-widget";
 
 import { productSchema, ProductSchema } from "@/src/entities/product/model/product.schema";
-import { useProductStore } from "@/src/entities/product/model/product.store";
+import {
+  getDiscountedUnitPrice,
+  useProductStore,
+} from "@/src/entities/product/model/product.store";
 import { useCategoryStore } from "@/src/entities/categories/model/categories.store";
 import { useSubcategoryStore } from "@/src/entities/subcategories/model/subcategories.store";
 
@@ -63,6 +67,7 @@ export default function ProductAddForm() {
       variants: [],
       preOrder: false,
       subcategoryId: "",
+      sale: 0,
     },
   });
 
@@ -83,6 +88,7 @@ export default function ProductAddForm() {
   const watchedCurrency = useWatch({ control, name: "currency" });
   const watchedQuantity = useWatch({ control, name: "quantity" });
   const watchedNameEn = useWatch({ control, name: "name.en" });
+  const watchedSale = useWatch({ control, name: "sale" });
 
   const additionalWidgetRef = useRef<{ open: () => void; close: () => void } | null>(null);
 
@@ -337,7 +343,7 @@ export default function ProductAddForm() {
               </div>
 
               <div className="p-6">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {/* Price */}
                   <div className="space-y-1.5">
                     <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide">
@@ -364,6 +370,51 @@ export default function ProductAddForm() {
                         {errors.price.message}
                       </p>
                     )}
+                  </div>
+
+                  {/* Sale (discount %) */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                      Sale (% off)
+                    </label>
+                    <div className="relative">
+                      <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <input
+                        type="number"
+                        step="1"
+                        min="0"
+                        max="100"
+                        {...register("sale", {
+                          setValueAs: (v) => {
+                            if (v === "" || v === null || v === undefined) return 0;
+                            const n = Number(v);
+                            return Number.isNaN(n) ? 0 : n;
+                          },
+                        })}
+                        placeholder="0"
+                        className={`w-full pl-9 pr-4 py-3 border text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-all ${
+                          errors.sale
+                            ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+                            : "border-gray-300 focus:border-gray-900 focus:ring-gray-900/10"
+                        }`}
+                      />
+                    </div>
+                    {errors.sale && (
+                      <p className="flex items-center gap-1 text-xs text-red-600">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        {errors.sale.message}
+                      </p>
+                    )}
+                    <p className="text-[11px] text-gray-400">
+                      0 = no discount. Final:{" "}
+                      <span className="text-gray-600 font-medium tabular-nums">
+                        {getDiscountedUnitPrice(
+                          Number(watchedPrice) || 0,
+                          watchedSale
+                        ).toFixed(2)}{" "}
+                        {watchedCurrency || "AZN"}
+                      </span>
+                    </p>
                   </div>
 
                   {/* Currency */}
@@ -714,10 +765,30 @@ export default function ProductAddForm() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">Price</span>
-                  <span className="font-medium">
-                    {watchedPrice > 0
-                      ? `${watchedPrice} ${watchedCurrency || "AZN"}`
-                      : <span className="text-gray-600 italic">—</span>}
+                  <span className="font-medium text-right">
+                    {watchedPrice > 0 ? (
+                      (watchedSale ?? 0) > 0 ? (
+                        <span className="inline-flex flex-col items-end gap-0.5">
+                          <span className="line-through text-gray-500 text-xs">
+                            {Number(watchedPrice).toFixed(2)} {watchedCurrency || "AZN"}
+                          </span>
+                          <span>
+                            {getDiscountedUnitPrice(
+                              Number(watchedPrice) || 0,
+                              watchedSale
+                            ).toFixed(2)}{" "}
+                            {watchedCurrency || "AZN"}
+                          </span>
+                          <span className="text-[10px] text-emerald-400 font-normal">
+                            −{Math.min(100, Math.max(0, Math.round(Number(watchedSale) || 0)))}%
+                          </span>
+                        </span>
+                      ) : (
+                        `${Number(watchedPrice).toFixed(2)} ${watchedCurrency || "AZN"}`
+                      )
+                    ) : (
+                      <span className="text-gray-600 italic">—</span>
+                    )}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">

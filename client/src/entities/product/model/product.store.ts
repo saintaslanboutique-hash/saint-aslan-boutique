@@ -2,6 +2,12 @@ import { create } from "zustand";
 import { Product } from "../types/product.types";
 import productApi from "../service/product.api";
 
+export {
+  getDiscountedUnitPrice,
+  isProductOnSale,
+  normalizeSalePercent,
+} from "../types/product.types";
+
 export type ProductWithId = Product & { _id?: string };
 
 function isError(e: unknown): e is { message: string } {

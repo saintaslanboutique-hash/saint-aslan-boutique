@@ -5,7 +5,11 @@ import { Bookmark, Pencil, Trash } from 'lucide-react';
 import { useLocale } from 'next-intl';
 import Image from 'next/image';
 import { useCallback, useState } from 'react';
-import { Product } from '@/src/entities/product/types/product.types';
+import {
+  Product,
+  getDiscountedUnitPrice,
+  isProductOnSale,
+} from '@/src/entities/product/types/product.types';
 import { useProductStore } from '@/src/entities/product/model/product.store';
 import { isAdmin } from '@/src/entities/user/lib/auth.utils';
 import { Button } from '@/components/ui/button';
@@ -49,6 +53,9 @@ export default function ProductCard({
 
   const displayName = product.name[locale] ?? product.name.en;
   const soldOut = isSoldOut(product);
+  const onSale = !soldOut && isProductOnSale(product);
+  const finalPrice = getDiscountedUnitPrice(product.price, product.sale);
+  const currency = product.currency ?? 'AZN';
 
   const selectedColorIndex = useProductStore(
     (s) => s.selectedColorIndexByProductId[productId] ?? 0
@@ -104,12 +111,19 @@ export default function ProductCard({
             </div>
           )}
 
-          {/* SALDI badge (sale) — shown for preOrder or if explicitly on sale */}
-          {!soldOut && product.preOrder && (
-            <div className="absolute top-2 left-2">
-              <span className="bg-[#e8f5e9] text-[#2e7d32] text-[10px] font-bold tracking-widest uppercase px-2 py-1">
-                SALDI
-              </span>
+          {/* Sale % + pre-order — top left */}
+          {!soldOut && (onSale || product.preOrder) && (
+            <div className="absolute top-2 left-2 flex flex-col gap-1 items-start pointer-events-none z-[1]">
+              {onSale && (
+                <span className="bg-red-600 text-white text-[10px] font-bold tracking-widest uppercase px-2 py-1">
+                  −{Math.round(product.sale ?? 0)}%
+                </span>
+              )}
+              {product.preOrder && (
+                <span className="bg-[#e8f5e9] text-[#2e7d32] text-[10px] font-bold tracking-widest uppercase px-2 py-1">
+                  PRE-ORDER
+                </span>
+              )}
             </div>
           )}
 
@@ -172,11 +186,20 @@ export default function ProductCard({
           {/* Price */}
           {soldOut ? (
             <p className="mt-0.5 text-xs text-neutral-400 line-through">
-              {product.price} {product.currency ?? 'AZN'}
+              {product.price} {currency}
+            </p>
+          ) : onSale ? (
+            <p className="mt-0.5 text-xs">
+              <span className="text-neutral-400 line-through mr-1.5 tabular-nums">
+                {product.price} {currency}
+              </span>
+              <span className="text-neutral-900 font-medium tabular-nums">
+                {finalPrice} {currency}
+              </span>
             </p>
           ) : (
-            <p className="mt-0.5 text-xs text-neutral-900 font-medium">
-              {product.price} {product.currency ?? 'AZN'}
+            <p className="mt-0.5 text-xs text-neutral-900 font-medium tabular-nums">
+              {product.price} {currency}
             </p>
           )}
 
