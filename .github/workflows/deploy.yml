@@ -19,6 +19,8 @@ jobs:
           script: |
             cd /var/www/saint-aslan-boutique
             
+            git fetch --all
+            git reset --hard origin/main
             git pull origin main
             
             # --- BACKEND GÜNCELLEMESİ ---
