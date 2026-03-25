@@ -31,5 +31,6 @@ jobs:
             # --- FRONTEND GÜNCELLEMESİ ---
             cd ../client
             npm install --legacy-peer-deps
+            npm install three @types/three
             npm run build
             pm2 restart saint-frontend
