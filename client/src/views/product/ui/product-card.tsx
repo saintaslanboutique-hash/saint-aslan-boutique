@@ -61,8 +61,23 @@ export default function ProductCard({
     (s) => s.selectedColorIndexByProductId[productId] ?? 0
   );
   const setSelectedColorIndex = useProductStore((s) => s.setSelectedColorIndex);
+  const selectedSizeIndex = useProductStore(
+    (s) => s.selectedSizeIndexByProductId[productId] ?? 0
+  );
   const uniqueColors = [...new Set((product.variants ?? []).map((v) => v.color))];
   const colors = uniqueColors.filter(Boolean);
+  const selectedColor = colors[selectedColorIndex] ?? colors[0];
+  const availableSizes = [
+    ...new Set(
+      (product.variants ?? [])
+        .filter((v) => !selectedColor || v.color === selectedColor)
+        .map((v) => v.size)
+    ),
+  ];
+  const sizes =
+    availableSizes.length > 0
+      ? availableSizes
+      : (product.variants ?? []).map((v) => v.size).filter(Boolean);
 
   const handleWishlist = useCallback(
     (e: React.MouseEvent) => {
@@ -127,12 +142,12 @@ export default function ProductCard({
             </div>
           )}
 
-          <div className="flex items-center gap-2 absolute top-2 right-2">
+          <div className="flex items-center gap-1 absolute top-1 right-2">
             {/* Edit button */}
             {isAdmin(user) && (
               <Button
                 variant="outline"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 rounded-none"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -148,7 +163,7 @@ export default function ProductCard({
             <Button
               type="button"
               onClick={handleWishlist}
-              className=" flex items-center justify-center w-8 h-8 bg-white/80 hover:bg-white transition-colors"
+              className="rounded-none flex items-center justify-center w-8 h-8 bg-white/80 hover:bg-white transition-colors"
               aria-label="Save to wishlist"
             >
               <Bookmark
@@ -162,7 +177,7 @@ export default function ProductCard({
             {isAdmin(user) && (
               <Button
                 variant="outline"
-                className="flex items-center gap-2"
+                className="rounded-none flex items-center gap-2"
                 disabled={deletingId === productId}
                 onClick={(e) => {
                   e.preventDefault();
@@ -174,6 +189,44 @@ export default function ProductCard({
               </Button>
             )}
           </div>
+
+          {/* Sizes — bottom overlay on hover (same styling as product page) */}
+          {sizes.length > 0 && (
+            <div
+              className="absolute inset-x-0 bottom-0 z-2 opacity-0 translate-y-1 pointer-events-none transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0"
+              aria-hidden
+            >
+              <div className="bg-white/80 px-2 py-2.5">
+                <div className="flex gap-2 flex-wrap justify-center">
+                  {sizes.map((size, index) => {
+                    const isSelected = index === selectedSizeIndex;
+                    const sizeVariant = (product.variants ?? []).find(
+                      (v) => v.color === selectedColor && v.size === size
+                    );
+                    const sizeInStock = (sizeVariant?.stock ?? 0) > 0;
+                    return (
+                      <span
+                        key={size}
+                        className="relative inline-flex min-w-[52px] h-10 items-center justify-center px-3 text-[11px] tracking-widest uppercase font-medium"
+                        style={{
+                          border: isSelected ? '1.5px solid #171717' : '1px solid #020404',
+                          backgroundColor: isSelected ? '#171717' : 'transparent',
+                          color: isSelected ? '#ffffff' : sizeInStock ? '#171717' : '#a3a3a3',
+                        }}
+                      >
+                        {size}
+                        {!sizeInStock && (
+                          <span className="absolute inset-0 flex items-center justify-center">
+                            <span className="block w-full h-px bg-black rotate-[-30deg]" />
+                          </span>
+                        )}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Text block */}
