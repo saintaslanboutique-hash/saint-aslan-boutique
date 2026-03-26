@@ -34,6 +34,8 @@
         "delivery": "Delivery",
         "assistance": "Assistance",
         "share": "Share",
-        "pinIt": "Pin it"
+        "pinIt": "Pin it",
+        "all": "All",
+        "filter": "Filter"
     }
 }

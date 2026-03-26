@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Host_Grotesk, Michroma } from "next/font/google";
+import { Geist, Host_Grotesk, Michroma, Golos_Text } from "next/font/google";
 
 import { cn } from "@/lib/utils";
 import localFont from 'next/font/local';
@@ -8,7 +8,7 @@ import AuthProvider from "@/src/app/providers/auth-provider";
 import { getServerSession } from "next-auth";
 import { authOptions } from "./api/auth/[...nextauth]/route";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
 const hostGrotesk = Host_Grotesk({
   subsets: ["latin"],
@@ -28,6 +28,12 @@ export const azonixFont = localFont({
   variable: '--font-azonix',
 });
 
+const golosText = Golos_Text({
+  subsets: ['latin'],
+  variable: '--font-golos-text',
+  display: 'swap',
+});
+
 
 export const metadata: Metadata = {
   title: "SAINT ASLAN",
@@ -43,9 +49,9 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      className={cn(hostGrotesk.variable, azonixFont.variable, michroma.variable, "font-sans", geist.variable)}
+      className={cn(hostGrotesk.variable, azonixFont.variable, michroma.variable, "font-sans", geist.variable, golosText.variable)}
     >
-      <body className={`${hostGrotesk.className} ${michroma.className} ${azonixFont.variable} antialiased`}>
+      <body className={`${hostGrotesk.className} ${golosText.className} ${michroma.className} ${azonixFont.variable} antialiased`}>
         <AuthProvider session={session}>
           {children}
         </AuthProvider>

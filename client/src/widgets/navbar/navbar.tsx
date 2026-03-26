@@ -35,7 +35,7 @@ export default function Navbar() {
         <div className="p-4">
             <div className="flex items-center justify-between py-4">
                 <Link href="/products">
-                    <h1 className="text-2xl font-bold">SAINT ASLAN</h1>
+                    <h1 className="text-5xl font-semibold -tracking-[0.1em]">SAINT ASLAN</h1>
                 </Link>
                 <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 pointer-events-none select-none">
                     <div className="flex items-center gap-2.5">

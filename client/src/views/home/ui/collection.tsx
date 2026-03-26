@@ -1,15 +1,14 @@
 "use client";
 
-import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Link from "next/link";
 import { ArrowDown } from "lucide-react";
+import Link from "next/link";
+import { useRef } from "react";
 
-import PixelReveal, { PIXEL_COLS, PIXEL_ROWS } from "@/src/shared/ui/pixel/pixel-reveal";
 import PixelConnectors from "@/src/shared/ui/pixel/pixel-connectors";
-import Shopify from "./shopify";
+import PixelReveal, { PIXEL_COLS, PIXEL_ROWS } from "@/src/shared/ui/pixel/pixel-reveal";
 
 
 gsap.registerPlugin(ScrollTrigger);

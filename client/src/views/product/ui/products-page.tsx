@@ -2,7 +2,7 @@
 
 import { useEffect, useCallback, useState, useMemo } from 'react';
 import { Plus, SlidersHorizontal } from 'lucide-react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useProductStore } from '@/src/entities/product/model/product.store';
 import { useCartStore } from '@/src/views/card/model/card.store';
 import { useCategoryStore } from '@/src/entities/categories/model/categories.store';
@@ -37,7 +37,7 @@ function shuffleArray<T>(arr: T[]): T[] {
 export default function ProductsPage() {
   const { user } = useAuthStore();
   const isMobile = useMobile();
-
+  const t = useTranslations('productPage');
   const locale = useLocale() as 'az' | 'en' | 'ru';
   const { products, isLoading, error, fetchProducts } = useProductStore();
   const addItem = useCartStore((s) => s.addItem);
@@ -62,7 +62,7 @@ export default function ProductsPage() {
     if (selectedCategory) {
       fetchSubcategories(selectedCategory);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
 
   // Recomputed whenever shuffleKey increments (user switches to Default) or products load
@@ -136,19 +136,19 @@ export default function ProductsPage() {
             <button
               type="button"
               onClick={() => handleCategorySelect('default')}
-              className={`shrink-0 px-3 py-1 text-xs font-semibold tracking-widest uppercase transition-colors whitespace-nowrap ${activeCategory === 'default'
+              className={`font-golos-text shrink-0 px-3 py-1 text-xs font-semibold tracking-widest uppercase transition-colors whitespace-nowrap ${activeCategory === 'default'
                 ? 'text-black border-b-2 border-black'
                 : 'text-neutral-400 hover:text-neutral-700'
                 }`}
             >
-              All
+              {t('all')}
             </button>
             {categories.map((cat) => (
               <button
                 key={cat._id}
                 type="button"
                 onClick={() => handleCategorySelect(cat._id!)}
-                className={`shrink-0 px-3 py-1 text-xs font-semibold tracking-widest uppercase transition-colors whitespace-nowrap ${activeCategory === cat._id
+                className={`font-golos-text shrink-0 px-3 py-1 text-xs font-semibold tracking-widest uppercase transition-colors whitespace-nowrap ${activeCategory === cat._id
                   ? 'text-black border-b-2 border-black'
                   : 'text-neutral-400 hover:text-neutral-700'
                   }`}
@@ -174,7 +174,7 @@ export default function ProductsPage() {
               className="flex items-center gap-1.5 text-xs font-semibold tracking-widest uppercase text-neutral-700 hover:text-black transition-colors"
             >
               <SlidersHorizontal className="w-3.5 h-3.5" strokeWidth={1.8} />
-              FILTER
+              {t('filter')}
             </button>
 
             {sortOpen && (

@@ -436,7 +436,7 @@ export default function NavbarMenu() {
         <>
             <nav className="bg-transparent z-60">
                 <div
-                    className="relative w-12 h-6 cursor-pointer group"
+                    className="relative w-12 h-6 cursor-pointer group z-60"
                     onClick={toggleMenu}
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
@@ -458,17 +458,7 @@ export default function NavbarMenu() {
             </nav>
 
             <div className="menu-overlay fixed inset-0 w-screen h-svh overflow-hidden bg-white z-50 text-black [clip-path:polygon(0%_0%,100%_0%,100%_0%,0%_0%)]">
-                <button
-                    type="button"
-                    aria-label="Close menu"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        closeMenu();
-                    }}
-                    className="fixed top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))] z-70 p-2 -m-2 text-black/60 hover:text-black transition-colors"
-                >
-                    <X className="h-7 w-7" strokeWidth={1.25} />
-                </button>
+                
                 <div
                     ref={menuContentRef}
                     className="relative w-full h-full flex content-center items-center origin-left-bottom will-change-[transform,opacity]"
