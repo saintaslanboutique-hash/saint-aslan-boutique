@@ -203,7 +203,7 @@ export default function CollectionSection() {
             ref={sectionRef}
             className="relative overflow-hidden flex flex-row"
         >
-            <div ref={textBlockRef} className="relative w-full min-h-screen flex flex-col md:flex-row  overflow-hidden">
+            <div ref={textBlockRef} className="relative w-full h-[50vh] lg:min-h-screen flex flex-col md:flex-row overflow-hidden">
                 <div ref={collectionRef} className="lg:rounded-[50px] absolute inset-0 z-10 flex items-center justify-center bg-white">
                     <svg
                         ref={svgRef}

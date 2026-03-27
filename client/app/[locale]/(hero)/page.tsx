@@ -85,7 +85,7 @@ export default function Home() {
       <section className="mt-12 lg:mt-0">
         <NewProductsSection />
       </section>
-      <section ref={collectionSectionRef} className="relative w-full min-h-[120vh]">
+      <section ref={collectionSectionRef} className="relative w-full h-[50vh] lg:min-h-[120vh] ">
         <CollectionSection />
       </section>
       <section ref={shopifySectionRef} className="relative w-full">
