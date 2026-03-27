@@ -14,10 +14,20 @@ import { useTranslations } from "next-intl";
 import { getProductId } from "../hooks/get-product-id";
 import { useCartStore } from "../model/card.store";
 import { ProductWithId } from "../types/product-with-id";
+import { cn } from "@/lib/utils";
 import CartLine from "./shop-card-line";
 
+type ShopCardProps = {
+    triggerClassName?: string;
+    iconClassName?: string;
+    badgeClassName?: string;
+};
 
-export default function ShopCard() {
+export default function ShopCard({
+    triggerClassName,
+    iconClassName,
+    badgeClassName,
+}: ShopCardProps = {}) {
     const t = useTranslations('cart');
     const items = useCartStore((s) => s.items);
     const totalPrice = useCartStore((s) => s.getTotalPrice());
@@ -29,12 +39,25 @@ export default function ShopCard() {
             <SheetTrigger asChild>
                 <button
                     type="button"
-                    className="relative p-1.5 -mt-3 group"
+                    className={cn(
+                        "relative p-1.5 -mt-3 group",
+                        triggerClassName,
+                    )}
                     aria-label={t('title')}
                 >
-                    <ShoppingBag className="w-[26px] h-[26px] text-neutral-800 group-hover:text-black transition-colors" />
+                    <ShoppingBag
+                        className={cn(
+                            "w-[26px] h-[26px] text-neutral-800 group-hover:text-black transition-colors",
+                            iconClassName,
+                        )}
+                    />
                     {totalItems > 0 && (
-                        <span className="absolute -top-0.5 -right-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-neutral-900 text-[10px] font-semibold text-white px-1 font-host-grotesk">
+                        <span
+                            className={cn(
+                                "absolute -top-0.5 -right-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-neutral-900 text-[10px] font-semibold text-white px-1 font-host-grotesk",
+                                badgeClassName,
+                            )}
+                        >
                             {totalItems > 99 ? '99+' : totalItems}
                         </span>
                     )}

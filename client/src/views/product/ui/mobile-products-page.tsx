@@ -207,7 +207,7 @@ export default function MobileProductsPage() {
         />
       )}
 
-      <div className="w-full px-3 py-6">
+      <div className="w-full px-2 py-6">
         {isLoading && products.length === 0 && (
           <div className="grid grid-cols-2 gap-x-4 gap-y-10">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -235,7 +235,7 @@ export default function MobileProductsPage() {
         )}
 
         {sortedProducts.length > 0 && (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-10">
+          <div className="grid grid-cols-2 gap-x-2 gap-y-6">
             {sortedProducts.map((product) => (
               <MobileProductCard
                 key={product._id}

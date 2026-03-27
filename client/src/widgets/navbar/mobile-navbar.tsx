@@ -4,19 +4,24 @@ import ProfileIcon from "@/src/entities/profile/ui/profile-icon";
 import useAuthStore from "@/src/entities/user/model/auth.store";
 import { useCartStore } from "@/src/views/card/model/card.store";
 import ShopCard from "@/src/views/card/ui/shop-card";
-import { Package } from "lucide-react";
-import Link from "next/link";
+import { ArrowLeft, Package } from "lucide-react";
 import { useEffect, useMemo } from "react";
+
+import { Link, usePathname } from "@/src/i18n/navigation";
 
 import MobileNavMenu from "./mobile-nav-menu";
 import { useSelectedProductStore } from "@/src/entities/product/model/selected-product";
 import { useCategoryStore } from "@/src/entities/categories/model/categories.store";
 
 export default function MobileNavbar() {
+    const pathname = usePathname();
     const { items } = useCartStore();
     const { user, initialize } = useAuthStore();
     const { selectedCategory } = useSelectedProductStore();
     const { categories } = useCategoryStore();
+
+    const isProductDetailPage =
+        pathname != null && pathname !== "/products" && pathname.startsWith("/products/");
 
     useEffect(() => {
         initialize();
@@ -31,6 +36,15 @@ export default function MobileNavbar() {
     return (
         <div className="p-4">
             <div className="relative flex flex-col items-center justify-between py-2">
+                {isProductDetailPage ? (
+                    <Link href="/products" className="absolute left-0 top-1/2 -translate-y-1/2">
+                        <ArrowLeft className="w-4 h-4" />
+                    </Link>
+                ) : (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2">
+                        {user && <ProfileIcon/>}
+                    </div>
+                )}
                 <Link href="/products">
                     <h1 className="text-sm font-bold">SAINT ASLAN</h1>
                 </Link>
@@ -48,12 +62,17 @@ export default function MobileNavbar() {
                         </div>
                     </div>
                     <div className="absolute right-0">
-                        <div className="relative flex flex-col items-center justify-center gap-1.5">
-                            {user && <ProfileIcon />}
+                        <div className="relative flex items-center justify-center gap-2.5">
+                            {items.length > 0 && (
+                                <ShopCard
+                                    triggerClassName="p-0"
+                                    iconClassName="w-5 h-5"
+                                    badgeClassName="-top-0.5 -right-1 h-3 min-w-3 px-0 text-[8px] leading-none"
+                                />
+                            )}
                             <div className="w-6">
                                 <MobileNavMenu />
                             </div>
-                            {items.length > 0 && <ShopCard />}
                         </div>
                     </div>
                 </div>

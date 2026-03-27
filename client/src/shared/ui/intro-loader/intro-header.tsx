@@ -14,12 +14,12 @@ export default function IntroHeader() {
     const isMobile = useMobile();
 
     return (
-        <nav className="w-full flex items-center justify-center py-4">
+        <nav className="w-full flex items-center justify-center py-2 lg:py-4">
             {titleInNavbar && (
                 <motion.div
                     layoutId={LOGO_CONTAINER_LAYOUT_ID}
                     // Added 'relative' and ensuring the container has a clean flex context
-                    className="relative flex items-center justify-center bg-transparent px-4 py-2 md:px-8 overflow-hidden z-50"
+                    className="relative flex items-center justify-center bg-transparent px-4 md:px-8 md:py-2 overflow-hidden z-50"
                     transition={{
                         type: "spring",
                         stiffness: isMobile ? 52 : 20,
