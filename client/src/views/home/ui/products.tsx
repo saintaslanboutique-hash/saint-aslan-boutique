@@ -3,16 +3,12 @@
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useEffect, useMemo, useRef } from "react";
-
-import { useProductStore } from "@/src/entities/product/model/product.store";
-import { ProductWithId } from "../../card/types/product-with-id";
-import ProductMarketCard from "../../product/ui/product-card-market";
+import { useRef } from "react";
 
 gsap.registerPlugin(ScrollTrigger);
 
 const WORDS = ["Artisan", "threads.", "Modern", "silhouettes.", "Effortless", "soul.", "Welcome", "to", "your", "new", "favorite", "ritual."];
-const CARD_ROTATIONS = [-2, 1, -4, 6, 8, -1, -6, -5, 2];
+
 
 
 export default function ProductsSection() {
@@ -23,17 +19,6 @@ export default function ProductsSection() {
     const cardsRef = useRef<(HTMLDivElement | null)[]>(Array(8).fill(null));
     const floatRefs = useRef<(HTMLDivElement | null)[]>(Array(8).fill(null));
 
-
-    const { products, fetchProducts } = useProductStore();
-
-    useEffect(() => {
-        fetchProducts();
-    }, [fetchProducts]);
-
-    const shuffleArray = (product: ProductWithId[]): ProductWithId[] => product.sort(() => Math.random() - 0.5);
-
-    const shuffledProducts = useMemo(() => shuffleArray(products), [products]);
-    const randomProducts = useMemo(() => shuffledProducts.slice(0, 8), [shuffledProducts]);
 
     useGSAP(() => {
         const letters = lettersRef.current.filter(Boolean) as SVGGElement[];
@@ -145,27 +130,8 @@ export default function ProductsSection() {
                         ))}
                     </p>
                 </div>
-
             </section>
-            <section ref={cardsSectionRef} className="bg-black hidden lg:flex h-screen w-full items-center justify-center overflow-hidden">
-                <div className="grid grid-cols-4 gap-8 px-10 w-full max-w-[1600px]">
-                    {randomProducts.map((product, i) => (
-                        <div
-                            key={i}
-                            ref={(el) => { cardsRef.current[i] = el; }}
-                            className="will-change-transform"
-                        >
-                            <div
-                                ref={(el) => { floatRefs.current[i] = el; }}
-                                className="h-full w-full"
-                                style={{ rotate: `${CARD_ROTATIONS[i] ?? 0}deg` }}
-                            >
-                                <ProductMarketCard product={product} />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </section>
+            
         </>
     );
 }

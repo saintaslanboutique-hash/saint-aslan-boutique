@@ -19,11 +19,11 @@ export default function IntroHeader() {
                 <motion.div
                     layoutId={LOGO_CONTAINER_LAYOUT_ID}
                     // Added 'relative' and ensuring the container has a clean flex context
-                    className="relative flex items-center justify-center bg-white px-4 py-2 md:px-8 overflow-hidden z-50"
+                    className="relative flex items-center justify-center bg-transparent px-4 py-2 md:px-8 overflow-hidden z-50"
                     transition={{
                         type: "spring",
-                        stiffness: isMobile ? 52 : 40,
-                        damping: isMobile ? 26 : 20,
+                        stiffness: isMobile ? 52 : 20,
+                        damping: isMobile ? 26 : 10,
                         duration: 1.5,
                     }}
                     onLayoutAnimationComplete={() => setIntroDone(true)}
@@ -34,7 +34,6 @@ export default function IntroHeader() {
                             className="mx-auto flex items-center justify-center font-bold uppercase tracking-tighter whitespace-nowrap text-black"
                             style={{
                                 fontSize: isMobile ? INTRO_MOBILE_LOGO_FONT_PX : 60,
-                                originX: 0.5,
                                 originY: 0.5,
                                 fontFamily: "var(--font-michroma)"
                             }}

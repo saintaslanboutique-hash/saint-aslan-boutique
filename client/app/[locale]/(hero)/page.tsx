@@ -1,5 +1,6 @@
 "use client"
 import CollectionSection from "@/src/views/home/ui/collection";
+import NewProductsSection from "@/src/views/home/ui/new-products";
 import ProductsSection from "@/src/views/home/ui/products";
 import Shopify from "@/src/views/home/ui/shopify";
 import Hero from "@/src/widgets/hero/hero";
@@ -78,8 +79,11 @@ export default function Home() {
   return (
 
     <main>
-      <section ref={heroSectionRef} className="relative overflow-hidden w-full h-screen z-0">
+      <section ref={heroSectionRef} className="relative overflow-hidden w-full h-screen z-0 hidden lg:block">
         <Hero />
+      </section>
+      <section className="mt-12 lg:mt-0">
+        <NewProductsSection />
       </section>
       <section ref={collectionSectionRef} className="relative w-full min-h-[120vh]">
         <CollectionSection />

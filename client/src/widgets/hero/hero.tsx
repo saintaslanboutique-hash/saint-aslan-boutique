@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useMobile } from "@/src/shared/hooks/use-mobile";
 import MobileHero from "./mobile-hero";
 
-const IMAGES = ["/hero_22.jpg", "/hero_33.jpg"];
+const IMAGES = ["/hore.jpg", "/hero-2.jpg"];
 const SQUARE_SIZE = 200;
 const INTERVAL = 5000;
 
@@ -53,11 +53,6 @@ function DesktopHero() {
         });
     }, []);
 
-    /**
-     * Calculates the exact backgroundSize and backgroundPosition for a grid cell
-     * to perfectly match `background-size: cover; background-position: center`
-     * on the full container.
-     */
     const getCoverStyle = useCallback(
         (src: string, col: number, row: number) => {
             const { width: containerW, height: containerH, cols, rows } = grid;

@@ -1,6 +1,7 @@
 {
     "hero": {
-        "button": "BİR KLİKLƏ SATIN AL"
+        "button": "BİR KLİKLƏ SATIN AL",
+        "newProducts": "Yeni Məhsullar"
     },
     "cart": {
         "addedToCart": "Səbətə əlavə edildi",

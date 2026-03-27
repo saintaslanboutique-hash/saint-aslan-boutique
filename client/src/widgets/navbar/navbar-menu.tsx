@@ -434,7 +434,7 @@ export default function NavbarMenu() {
 
     return (
         <>
-            <nav className="bg-transparent z-60">
+            <nav className="bg-transparent z-9999">
                 <div
                     className="relative w-12 h-6 cursor-pointer group z-60"
                     onClick={toggleMenu}
