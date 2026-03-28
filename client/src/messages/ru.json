@@ -11,7 +11,11 @@
         "total": "Итого",
         "remove": "Удалить",
         "close": "Закрыть",
-        "quantity": "Кол-во"
+        "quantity": "Кол-во",
+        "subtotal": "Итого",
+        "discount": "Скидка",
+        "checkout": "Оплатить",
+        "continueShopping": "Продолжить покупки"
     },
     "home": {
         "title": "Главная",

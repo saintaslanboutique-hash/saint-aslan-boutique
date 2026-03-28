@@ -17,12 +17,13 @@ const { requireAdmin } = require("../middleware/role.middleware");
 router.post("/", createOrderHandler); // Create new order
 router.get("/", getUserOrdersHandler); // Get user's orders
 router.get("/pending", getPendingOrdersHandler); // Get pending orders for cart restoration
+
+// Admin routes (before /:id so "admin" is not captured as id)
+router.get("/admin/all", requireAdmin, getAllOrdersHandler); // Get all orders (admin)
+
 router.get("/:id", getOrderByIdHandler); // Get single order
 router.patch("/:id", updateOrderStatusHandler); // Update order status
 router.delete("/:id", deleteOrderHandler); // Delete/cancel order
-
-// Admin routes
-router.get("/admin/all", requireAdmin, getAllOrdersHandler); // Get all orders (admin)
 
 module.exports = router;
 

@@ -4,13 +4,18 @@ import { Link } from '@/src/i18n/navigation';
 import { Bookmark, Pencil, Trash } from 'lucide-react';
 import { useLocale } from 'next-intl';
 import Image from 'next/image';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Product,
   getDiscountedUnitPrice,
+  getFirstInStockSizeIndex,
   isProductOnSale,
+  isVariantSizeInStock,
 } from '@/src/entities/product/types/product.types';
 import { useProductStore } from '@/src/entities/product/model/product.store';
+import { useCartStore } from '@/src/views/card/model/card.store';
+import { useTranslations } from 'next-intl';
+import toast from 'react-hot-toast';
 import { isAdmin } from '@/src/entities/user/lib/auth.utils';
 import { Button } from '@/components/ui/button';
 import useAuthStore from '@/src/entities/user/model/auth.store';
@@ -37,7 +42,10 @@ function isSoldOut(product: ProductWithId): boolean {
 export default function ProductCard({
   product,
 }: { product: ProductWithId } & ProductCardAddToCartProps) {
+  const tCart = useTranslations('cart');
   const locale = useLocale() as LocaleKey;
+  const addItem = useCartStore((s) => s.addItem);
+  const isSyncing = useCartStore((s) => s.isSyncing);
   const user = useAuthStore((s) => s.user);
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -61,23 +69,46 @@ export default function ProductCard({
     (s) => s.selectedColorIndexByProductId[productId] ?? 0
   );
   const setSelectedColorIndex = useProductStore((s) => s.setSelectedColorIndex);
+  const setSelectedSizeIndex = useProductStore((s) => s.setSelectedSizeIndex);
   const selectedSizeIndex = useProductStore(
     (s) => s.selectedSizeIndexByProductId[productId] ?? 0
   );
   const uniqueColors = [...new Set((product.variants ?? []).map((v) => v.color))];
   const colors = uniqueColors.filter(Boolean);
   const selectedColor = colors[selectedColorIndex] ?? colors[0];
-  const availableSizes = [
-    ...new Set(
-      (product.variants ?? [])
-        .filter((v) => !selectedColor || v.color === selectedColor)
-        .map((v) => v.size)
-    ),
-  ];
-  const sizes =
-    availableSizes.length > 0
+  const sizes = useMemo(() => {
+    const availableSizes = [
+      ...new Set(
+        (product.variants ?? [])
+          .filter((v) => !selectedColor || v.color === selectedColor)
+          .map((v) => v.size)
+      ),
+    ];
+    return availableSizes.length > 0
       ? availableSizes
       : (product.variants ?? []).map((v) => v.size).filter(Boolean);
+  }, [product.variants, selectedColor]);
+
+  useEffect(() => {
+    if (!productId || sizes.length === 0) return;
+    const variants = product.variants;
+    if (
+      isVariantSizeInStock(sizes, selectedSizeIndex, selectedColor, variants)
+    ) {
+      return;
+    }
+    const next = getFirstInStockSizeIndex(sizes, selectedColor, variants);
+    if (next !== null && next !== selectedSizeIndex) {
+      setSelectedSizeIndex(productId, next);
+    }
+  }, [
+    productId,
+    product.variants,
+    sizes,
+    selectedColor,
+    selectedSizeIndex,
+    setSelectedSizeIndex,
+  ]);
 
   const handleWishlist = useCallback(
     (e: React.MouseEvent) => {
@@ -86,6 +117,41 @@ export default function ProductCard({
       toggleWishlisted(productId);
     },
     [productId, toggleWishlisted]
+  );
+
+  const handleSizeAddToCart = useCallback(
+    async (e: React.MouseEvent, size: string, index: number) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (soldOut || !productId) return;
+      const sizeVariant = (product.variants ?? []).find(
+        (v) => v.color === selectedColor && v.size === size
+      );
+      const sizeInStock = (sizeVariant?.stock ?? 0) > 0;
+      if (!sizeInStock) return;
+      setSelectedSizeIndex(productId, index);
+      const variantId =
+        sizeVariant?._id != null ? String(sizeVariant._id) : undefined;
+      if ((product.variants?.length ?? 0) > 0 && !variantId) {
+        toast.error('Could not add item: variant id missing');
+        return;
+      }
+      try {
+        await addItem(product, 1, variantId);
+        toast.success(tCart('addedToCart'));
+      } catch {
+        toast.error('Could not add to cart');
+      }
+    },
+    [
+      addItem,
+      product,
+      productId,
+      selectedColor,
+      setSelectedSizeIndex,
+      soldOut,
+      tCart,
+    ]
   );
 
   const handleDeleteConfirm = useCallback(async () => {
@@ -193,10 +259,10 @@ export default function ProductCard({
           {/* Sizes — bottom overlay on hover (same styling as product page) */}
           {sizes.length > 0 && (
             <div
-              className="absolute inset-x-0 bottom-0 z-2 opacity-0 translate-y-1 pointer-events-none transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0"
+              className="absolute inset-x-0 bottom-0 z-2 opacity-0 translate-y-1 pointer-events-none group-hover:pointer-events-auto transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0"
               aria-hidden
             >
-              <div className="bg-white/80 px-2 py-2.5">
+              <div className="bg-white/80 px-2 py-2.5 pointer-events-auto">
                 <div className="flex gap-2 flex-wrap justify-center">
                   {sizes.map((size, index) => {
                     const isSelected = index === selectedSizeIndex;
@@ -205,22 +271,26 @@ export default function ProductCard({
                     );
                     const sizeInStock = (sizeVariant?.stock ?? 0) > 0;
                     return (
-                      <span
+                      <button
                         key={size}
-                        className="relative inline-flex min-w-[52px] h-10 items-center justify-center px-3 text-[11px] tracking-widest uppercase font-medium"
+                        type="button"
+                        disabled={!sizeInStock || isSyncing}
+                        onClick={(e) => handleSizeAddToCart(e, size, index)}
+                        className="relative inline-flex min-w-[52px] h-10 items-center justify-center px-3 text-[11px] tracking-widest uppercase font-medium disabled:cursor-not-allowed disabled:opacity-60"
                         style={{
                           border: isSelected ? '1.5px solid #171717' : '1px solid #020404',
                           backgroundColor: isSelected ? '#171717' : 'transparent',
                           color: isSelected ? '#ffffff' : sizeInStock ? '#171717' : '#a3a3a3',
+                          cursor: sizeInStock ? 'pointer' : 'not-allowed',
                         }}
                       >
                         {size}
                         {!sizeInStock && (
-                          <span className="absolute inset-0 flex items-center justify-center">
+                          <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
                             <span className="block w-full h-px bg-black rotate-[-30deg]" />
                           </span>
                         )}
-                      </span>
+                      </button>
                     );
                   })}
                 </div>

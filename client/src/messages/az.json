@@ -11,7 +11,11 @@
         "total": "Cəmi",
         "remove": "Sil",
         "close": "Bağla",
-        "quantity": "Say"
+        "quantity": "Say",
+        "subtotal": "Cəmi",
+        "discount": "Endirim",
+        "checkout": "Ödəniş et",
+        "continueShopping": "Davam et"
     },
     "home": {
         "title": "Ana Səhifə",

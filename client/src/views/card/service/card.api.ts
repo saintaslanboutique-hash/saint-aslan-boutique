@@ -23,6 +23,8 @@ export interface ServerCartItem {
   product: string;
   quantity: number;
   productData?: unknown;
+  /** Required in API when the product has variants (Mongo subdoc id). */
+  variantId?: string;
 }
 
 const cartAPI = {
@@ -34,10 +36,11 @@ const cartAPI = {
 
   // Update user's cart on server
   updateCart: async (items: CartItem[]) => {
-    const serverCart = items.map(item => ({
+    const serverCart = items.map((item) => ({
       product: (item.product as unknown as { _id: string })._id,
       quantity: item.quantity,
-      productData: item.product
+      productData: item.product,
+      ...(item.variantId && { variantId: item.variantId }),
     }));
     const response = await axiosInstance.put<{ data: ServerCartItem[] }>("/cart", { cart: serverCart });
     return response.data;
@@ -50,11 +53,17 @@ const cartAPI = {
   },
 
   // Add a single item to cart (optional: use for optimistic add without full sync)
-  addItem: async (productId: string, quantity: number, productData?: unknown) => {
+  addItem: async (
+    productId: string,
+    quantity: number,
+    productData?: unknown,
+    variantId?: string
+  ) => {
     const response = await axiosInstance.post<{ data: ServerCartItem[] }>("/cart/item", {
       product: productId,
       quantity,
       productData,
+      ...(variantId && { variantId }),
     });
     return response.data;
   },

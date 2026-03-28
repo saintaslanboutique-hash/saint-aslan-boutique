@@ -31,9 +31,10 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: { type: Date, default: null },
 
   cart: [{
-    product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+    product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+    variantId: { type: mongoose.Schema.Types.ObjectId, required: false },
     quantity: { type: Number, default: 1 },
-    productData: { type: mongoose.Schema.Types.Mixed } // Store product snapshot
+    productData: { type: mongoose.Schema.Types.Mixed },
   }],
 
   isActive: { type: String, default: true },

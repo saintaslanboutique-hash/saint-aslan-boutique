@@ -10,13 +10,13 @@ const orderSchema = new mongoose.Schema({
     {
       product: {
         type: mongoose.Schema.Types.ObjectId,
-        refPath: "items.productType",
+        ref: "Product",
         required: true,
       },
-      productType: {
-        type: String,
-        enum: ["Bag", "Accessory"],
-        required: true,
+      /** Set when the product has variants (matches Product.variants subdoc _id). */
+      variantId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: false,
       },
       productData: {
         type: mongoose.Schema.Types.Mixed,

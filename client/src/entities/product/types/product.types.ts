@@ -47,6 +47,7 @@ export type Product = {
     image?: string;
     images?: string[];
     variants?: {
+        _id?: string;
         color: string;
         size: string;
         stock: number;
@@ -61,3 +62,34 @@ export type Product = {
     preOrder?: boolean;
     currency?: string;
 };
+
+/** True when the size at `sizeIndex` has stock for the given color (variants grid). */
+export function isVariantSizeInStock(
+    sizes: string[],
+    sizeIndex: number,
+    selectedColor: string | undefined,
+    variants: Product['variants'] | undefined
+): boolean {
+    if (sizeIndex < 0 || sizeIndex >= sizes.length || !variants?.length) {
+        return false;
+    }
+    const row = variants.find(
+        (v) => v.color === selectedColor && v.size === sizes[sizeIndex]
+    );
+    return (row?.stock ?? 0) > 0;
+}
+
+/** First size index with stock for this color, or `null` if none. */
+export function getFirstInStockSizeIndex(
+    sizes: string[],
+    selectedColor: string | undefined,
+    variants: Product['variants'] | undefined
+): number | null {
+    if (!sizes.length || !variants?.length) return null;
+    for (let i = 0; i < sizes.length; i++) {
+        if (isVariantSizeInStock(sizes, i, selectedColor, variants)) {
+            return i;
+        }
+    }
+    return null;
+}

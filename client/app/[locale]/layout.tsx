@@ -1,3 +1,4 @@
+import { AppToaster } from "@/src/shared/ui/app-toaster";
 import { routing } from "@/src/i18n/routing";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
@@ -30,6 +31,7 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider messages={messages} locale={locale}>
+      <AppToaster />
       {children}
     </NextIntlClientProvider>
   );

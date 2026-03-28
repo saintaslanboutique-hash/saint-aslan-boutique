@@ -1,8 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
 import { useCallback } from 'react';
-import toast from 'react-hot-toast';
 
 import { useCartStore } from '../model/card.store';
 import type { Product } from '@/src/entities/product/types/product.types';
@@ -15,15 +13,13 @@ type ProductPageWithCartProps = {
 };
 
 export function ProductPageWithCart({ productId }: ProductPageWithCartProps) {
-  const t = useTranslations('cart');
   const addItem = useCartStore((s) => s.addItem);
 
   const onAddToCart = useCallback(
-    async (product: ProductWithId, quantity: number) => {
-      await addItem(product, quantity);
-      toast.success(t('addedToCart'));
+    async (product: ProductWithId, quantity: number, variantId?: string) => {
+      await addItem(product, quantity, variantId);
     },
-    [addItem, t]
+    [addItem]
   );
 
   return <ProductPage productId={productId} onAddToCart={onAddToCart} />;

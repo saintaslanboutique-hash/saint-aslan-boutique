@@ -21,7 +21,7 @@ router.use("/api/users", authMiddleware, userRouter);
 router.post("/api/pay/callback", callbackPayment);
 router.use("/api/pay", authMiddleware, paymentRouter);
 router.use("/api/cart", authMiddleware, cardRouter);
-router.use("/orders", authMiddleware, orderRouter);
+router.use("/api/orders", authMiddleware, orderRouter);
 router.use("/api/products", productsRouter);
 router.use("/api/categories", categoryRouter);
 router.use("/api/subcategories", subcategoryRouter);

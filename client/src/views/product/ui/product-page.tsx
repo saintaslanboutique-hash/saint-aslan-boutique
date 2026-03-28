@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useTranslations, useLocale } from 'next-intl';
 import { Bookmark, Minus, Plus } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -11,7 +12,9 @@ import { useProductStore } from '@/src/entities/product/model/product.store';
 import {
   type Product,
   getDiscountedUnitPrice,
+  getFirstInStockSizeIndex,
   isProductOnSale,
+  isVariantSizeInStock,
 } from '@/src/entities/product/types/product.types';
 
 type ProductWithId = Product & { _id?: string };
@@ -26,7 +29,12 @@ const accordionSections = [
 ] as const;
 
 export type ProductPageAddToCartProps = {
-  onAddToCart?: (product: ProductWithId, quantity: number) => void;
+  /** Pass Mongo variant subdoc id when the product has variants (color/size). */
+  onAddToCart?: (
+    product: ProductWithId,
+    quantity: number,
+    variantId?: string
+  ) => void | Promise<void>;
 };
 
 export default function ProductPage({
@@ -36,6 +44,7 @@ export default function ProductPage({
   productId: string;
 } & ProductPageAddToCartProps) {
   const t = useTranslations('productPage');
+  const tCart = useTranslations('cart');
   const locale = useLocale() as LocaleKey;
 
   const {
@@ -101,20 +110,45 @@ export default function ProductPage({
   const uniqueColors = [...new Set((product?.variants ?? []).map((v) => v.color))];
   const colors = uniqueColors.length ? uniqueColors : [];
   const selectedColor = colors[selectedColorIndex] ?? colors[0];
-  const availableSizes = [
+  const variants = product?.variants ?? [];
+  const availableSizesForColor = [
     ...new Set(
-      (product?.variants ?? [])
+      variants
         .filter((v) => !selectedColor || v.color === selectedColor)
         .map((v) => v.size)
     ),
   ];
-  const sizes = availableSizes.length
-    ? availableSizes
-    : (product?.variants ?? []).map((v) => v.size).filter(Boolean);
+  const sizes =
+    availableSizesForColor.length > 0
+      ? availableSizesForColor
+      : variants.map((v) => v.size).filter(Boolean);
 
-  const selectedVariant = (product?.variants ?? []).find(
+  useEffect(() => {
+    if (!id || !product || sizes.length === 0) return;
+    const productVariants = product.variants ?? [];
+    if (
+      isVariantSizeInStock(sizes, selectedSizeIndex, selectedColor, productVariants)
+    ) {
+      return;
+    }
+    const next = getFirstInStockSizeIndex(sizes, selectedColor, productVariants);
+    if (next !== null && next !== selectedSizeIndex) {
+      setSelectedSizeIndex(id, next);
+    }
+  }, [
+    id,
+    product,
+    sizes,
+    selectedColor,
+    selectedSizeIndex,
+    setSelectedSizeIndex,
+  ]);
+
+  const selectedVariant = variants.find(
     (v) => v.color === selectedColor && v.size === sizes[selectedSizeIndex]
   );
+  const selectedVariantId =
+    selectedVariant?._id != null ? String(selectedVariant._id) : undefined;
   const variantStock = selectedVariant?.stock ?? product?.quantity ?? 0;
   const inStock = variantStock > 0;
 
@@ -147,6 +181,16 @@ export default function ProductPage({
 
   const toggleAccordion = (key: string) => {
     setOpenAccordion((prev) => (prev === key ? null : key));
+  };
+
+  const handleAddToCart = async () => {
+    if (!onAddToCart || !product || !inStock) return;
+    try {
+      await Promise.resolve(onAddToCart(product, 1, selectedVariantId));
+      toast.success(tCart('addedToCart'));
+    } catch {
+      toast.error('Could not add to cart');
+    }
   };
 
   const deliveryDates = useMemo(() => {
@@ -432,7 +476,7 @@ export default function ProductPage({
           {/* Add to cart button */}
           <motion.button
             type="button"
-            onClick={() => onAddToCart?.(product, 1)}
+            onClick={handleAddToCart}
             disabled={!onAddToCart || !inStock}
             className="w-full h-12 flex items-center justify-between px-5 bg-neutral-900 text-white text-[11px] tracking-widest uppercase font-medium focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed mb-4"
             whileHover={onAddToCart && inStock ? { backgroundColor: '#333' } : {}}

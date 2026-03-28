@@ -8,13 +8,16 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet";
+import { useMemo } from 'react';
 
-import { ShoppingBag, X, ArrowRight, Package } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { getProductId } from "../hooks/get-product-id";
-import { useCartStore } from "../model/card.store";
-import { ProductWithId } from "../types/product-with-id";
 import { cn } from "@/lib/utils";
+import { getDiscountedUnitPrice } from "@/src/entities/product/types/product.types";
+import { ArrowRight, Handbag, Package } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import Link from "next/link";
+import { getProductId } from "../hooks/get-product-id";
+import { cartLineKey, useCartStore } from "../model/card.store";
+import { ProductWithId } from "../types/product-with-id";
 import CartLine from "./shop-card-line";
 
 type ShopCardProps = {
@@ -29,10 +32,29 @@ export default function ShopCard({
     badgeClassName,
 }: ShopCardProps = {}) {
     const t = useTranslations('cart');
+    const locale = useLocale();
     const items = useCartStore((s) => s.items);
-    const totalPrice = useCartStore((s) => s.getTotalPrice());
     const totalItems = useCartStore((s) => s.getTotalItems());
     const isLoading = useCartStore((s) => s.isLoading);
+
+    /** Sum of (discounted unit × qty); matches server order totals. */
+    const { totalWithDiscount, grossSubtotal, savings } = useMemo(() => {
+        let gross = 0;
+        let net = 0;
+        for (const line of items) {
+            const p = line.product as ProductWithId;
+            const base = p.price ?? 0;
+            gross += base * line.quantity;
+            net += getDiscountedUnitPrice(base, p.sale) * line.quantity;
+        }
+        const save = Math.max(0, Math.round((gross - net) * 100) / 100);
+        return { totalWithDiscount: net, grossSubtotal: gross, savings: save };
+    }, [items]);
+
+    const checkoutHref =
+        totalItems > 0
+            ? `/${locale}/payment?count=${totalItems}&total=${encodeURIComponent(totalWithDiscount.toFixed(2))}`
+            : `/${locale}/payment`;
 
     return (
         <Sheet>
@@ -40,21 +62,21 @@ export default function ShopCard({
                 <button
                     type="button"
                     className={cn(
-                        "relative p-1.5 -mt-3 group",
+                        "relative p-1.5  group",
                         triggerClassName,
                     )}
                     aria-label={t('title')}
                 >
-                    <ShoppingBag
+                    <Handbag
                         className={cn(
-                            "w-[26px] h-[26px] text-neutral-800 group-hover:text-black transition-colors",
+                            "w-[24px] h-[24px] text-neutral-600 group-hover:text-black transition-colors",
                             iconClassName,
                         )}
                     />
                     {totalItems > 0 && (
                         <span
                             className={cn(
-                                "absolute -top-0.5 -right-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-neutral-900 text-[10px] font-semibold text-white px-1 font-host-grotesk",
+                                "absolute -top-0.5 -right-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-neutral-700 text-[10px] font-semibold text-white px-1 font-host-grotesk",
                                 badgeClassName,
                             )}
                         >
@@ -113,7 +135,12 @@ export default function ShopCard({
                     ) : (
                         <ul className="px-6 py-4 space-y-1">
                             {items.map((item) => (
-                                <li key={getProductId(item.product as ProductWithId)}>
+                                <li
+                                    key={cartLineKey(
+                                        getProductId(item.product as ProductWithId),
+                                        item.variantId
+                                    )}
+                                >
                                     <CartLine item={item} />
                                 </li>
                             ))}
@@ -124,22 +151,39 @@ export default function ShopCard({
                 {/* Footer */}
                 {items.length > 0 && (
                     <div className="shrink-0 border-t border-neutral-100 px-6 pt-4 pb-6 space-y-4">
-                        {/* Subtotal row */}
+                        {savings > 0 && (
+                            <>
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-neutral-400 font-host-grotesk">{t('subtotal')}</span>
+                                    <span className="text-neutral-400 line-through tabular-nums font-host-grotesk">
+                                        {grossSubtotal.toFixed(2)} AZN
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-emerald-700 font-host-grotesk">{t('discount')}</span>
+                                    <span className="text-emerald-700 font-medium tabular-nums font-host-grotesk">
+                                        −{savings.toFixed(2)} AZN
+                                    </span>
+                                </div>
+                            </>
+                        )}
                         <div className="flex items-center justify-between">
                             <span className="text-sm text-neutral-500 font-host-grotesk">{t('total')}</span>
-                            <span className="text-base font-semibold text-neutral-900 font-host-grotesk">
-                                {totalPrice.toFixed(2)} AZN
+                            <span className="text-base font-semibold text-neutral-900 font-host-grotesk tabular-nums">
+                                {totalWithDiscount.toFixed(2)} AZN
                             </span>
                         </div>
 
                         {/* CTA */}
-                        <button
-                            type="button"
-                            className="w-full flex items-center justify-center gap-2 bg-neutral-900 hover:bg-neutral-800 active:bg-black text-white text-sm font-medium tracking-wide py-3.5 rounded-xl transition-colors duration-200 font-host-grotesk"
-                        >
-                            Checkout
-                            <ArrowRight className="w-4 h-4" />
-                        </button>
+                        <SheetClose asChild>
+                            <Link
+                                href={checkoutHref}
+                                className="w-full flex items-center justify-center gap-2 bg-neutral-900 hover:bg-neutral-800 active:bg-black text-white text-sm font-medium tracking-wide py-3.5 rounded-xl transition-colors duration-200 font-host-grotesk"
+                            >
+                                {t('checkout')}
+                                <ArrowRight className="w-4 h-4" />
+                            </Link>
+                        </SheetClose>
 
                         {/* Continue shopping */}
                         <SheetClose asChild>
@@ -147,7 +191,7 @@ export default function ShopCard({
                                 type="button"
                                 className="w-full text-sm text-neutral-500 hover:text-neutral-900 transition-colors text-center font-host-grotesk"
                             >
-                                {t('close')}
+                                {t('continueShopping')}
                             </button>
                         </SheetClose>
                     </div>

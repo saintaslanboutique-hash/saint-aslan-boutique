@@ -11,7 +11,11 @@
         "total": "Total",
         "remove": "Remove",
         "close": "Close",
-        "quantity": "Qty"
+        "quantity": "Qty",
+        "subtotal": "Subtotal",
+        "discount": "Discount",
+        "checkout": "Checkout",
+        "continueShopping": "Continue shopping"
     },
     "home": {
         "title": "Home",

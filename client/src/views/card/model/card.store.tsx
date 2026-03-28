@@ -1,4 +1,4 @@
-import { Product } from "@/src/entities/product/types/product.types";
+import { Product, getDiscountedUnitPrice } from "@/src/entities/product/types/product.types";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import cartAPI from "../service/card.api";
@@ -10,9 +10,26 @@ function getProductId(p: ProductWithId): string {
   return (p as { _id?: string })._id ?? (p as { id?: string }).id ?? "";
 }
 
+/** Same key as server `cartLineKey`: product + optional variant subdoc id. */
+export function cartLineKey(productId: string, variantId?: string): string {
+  return `${productId}:${variantId ?? ""}`;
+}
+
+/** Picks explicit variant or first variant’s id — same rule the server expects for orders. */
+export function resolveVariantIdForCart(product: ProductWithId, explicit?: string): string | undefined {
+  if (explicit) return String(explicit);
+  const v = product.variants;
+  if (!v?.length) return undefined;
+  const first = v[0] as { _id?: string; id?: string };
+  const id = first._id ?? first.id;
+  return id != null ? String(id) : undefined;
+}
+
 export interface CartItem {
   product: ProductWithId;
   quantity: number;
+  /** Mongo id of selected variant when product has variants. */
+  variantId?: string;
 }
 
 interface CartState {
@@ -21,9 +38,9 @@ interface CartState {
     isLoading: boolean;
     userId: string | null;
 
-    addItem: (product: Product, quantity: number) => Promise<void>;
-    removeItem: (productId: string) => Promise<void>;
-    updateQuantity: (productId: string, quantity: number) => Promise<void>;
+    addItem: (product: Product, quantity: number, variantId?: string) => Promise<void>;
+    removeItem: (productId: string, variantId?: string) => Promise<void>;
+    updateQuantity: (productId: string, quantity: number, variantId?: string) => Promise<void>;
     clearCart: () => Promise<void>;
     getTotalPrice: () => number;
     getTotalItems: () => number;
@@ -43,36 +60,56 @@ export const useCartStore = create<CartState>()(
             isLoading: false,
             userId: null,
 
-            addItem: async (product, quantity) => {
-                const id = getProductId(product as ProductWithId);
+            addItem: async (product, quantity, variantId) => {
+                const p = product as ProductWithId;
+                const id = getProductId(p);
+                const resolvedVariant = resolveVariantIdForCart(p, variantId);
+                const key = cartLineKey(id, resolvedVariant);
                 set((state) => {
-                    const existing = state.items.find(i => getProductId(i.product as ProductWithId) === id);
+                    const existing = state.items.find(
+                        (i) => cartLineKey(getProductId(i.product as ProductWithId), i.variantId) === key
+                    );
                     if (existing) {
                         return {
-                            items: state.items.map(i =>
-                                getProductId(i.product as ProductWithId) === id
-                                  ? { ...i, quantity: i.quantity + quantity }
-                                  : i
+                            items: state.items.map((i) =>
+                                cartLineKey(getProductId(i.product as ProductWithId), i.variantId) === key
+                                    ? { ...i, quantity: i.quantity + quantity }
+                                    : i
                             ),
                         };
                     }
-                    return { items: [...state.items, { product: product as ProductWithId, quantity }] };
+                    return {
+                        items: [
+                            ...state.items,
+                            {
+                                product: p,
+                                quantity,
+                                ...(resolvedVariant && { variantId: resolvedVariant }),
+                            },
+                        ],
+                    };
                 });
                 await get().syncWithServer();
             },
 
-            removeItem: async (productId) => {
+            removeItem: async (productId, variantId) => {
+                const key = cartLineKey(productId, variantId);
                 set((state) => ({
-                    items: state.items.filter(i => getProductId(i.product as ProductWithId) !== productId),
+                    items: state.items.filter(
+                        (i) => cartLineKey(getProductId(i.product as ProductWithId), i.variantId) !== key
+                    ),
                 }));
                 await get().syncWithServer();
             },
 
-            updateQuantity: async (productId, quantity) => {
+            updateQuantity: async (productId, quantity, variantId) => {
                 if (quantity < 1) return;
+                const key = cartLineKey(productId, variantId);
                 set((state) => ({
-                    items: state.items.map(i =>
-                        getProductId(i.product as ProductWithId) === productId ? { ...i, quantity } : i
+                    items: state.items.map((i) =>
+                        cartLineKey(getProductId(i.product as ProductWithId), i.variantId) === key
+                            ? { ...i, quantity }
+                            : i
                     ),
                 }));
                 await get().syncWithServer();
@@ -87,7 +124,13 @@ export const useCartStore = create<CartState>()(
                 }
             },
 
-            getTotalPrice: () => get().items.reduce((total, i) => total + i.product.price * i.quantity, 0),
+            getTotalPrice: () =>
+                get().items.reduce(
+                    (total, i) =>
+                        total +
+                        getDiscountedUnitPrice(i.product.price ?? 0, i.product.sale) * i.quantity,
+                    0
+                ),
             getTotalItems: () => get().items.reduce((total, i) => total + i.quantity, 0),
 
             syncWithServer: async () => {
@@ -111,10 +154,17 @@ export const useCartStore = create<CartState>()(
                     const response = await cartAPI.getCart();
                     const cartItems: CartItem[] = (response.data || [])
                         .filter((i) => i.productData)
-                        .map((i) => ({
-                            product: i.productData as ProductWithId,
-                            quantity: i.quantity,
-                        }));
+                        .map((i) => {
+                            const product = i.productData as ProductWithId;
+                            const variantId =
+                                (i.variantId && String(i.variantId)) ||
+                                resolveVariantIdForCart(product, undefined);
+                            return {
+                                product,
+                                quantity: i.quantity,
+                                ...(variantId && { variantId }),
+                            };
+                        });
                     set({ items: cartItems, userId });
                 } catch (error) {
                     console.error("Failed to load cart from server:", error);
@@ -131,17 +181,29 @@ export const useCartStore = create<CartState>()(
                     const response = await cartAPI.getCart();
                     const serverItems: CartItem[] = (response.data || [])
                         .filter((i) => i.productData)
-                        .map((i) => ({
-                            product: i.productData as ProductWithId,
-                            quantity: i.quantity,
-                        }));
+                        .map((i) => {
+                            const product = i.productData as ProductWithId;
+                            const variantId =
+                                (i.variantId && String(i.variantId)) ||
+                                resolveVariantIdForCart(product, undefined);
+                            return {
+                                product,
+                                quantity: i.quantity,
+                                ...(variantId && { variantId }),
+                            };
+                        });
 
                     const mergedItems = [...serverItems];
 
                     for (const localItem of localItems) {
                         const localId = getProductId(localItem.product as ProductWithId);
+                        const localKey = cartLineKey(localId, localItem.variantId);
                         const existingIndex = mergedItems.findIndex(
-                            (item) => getProductId(item.product as ProductWithId) === localId
+                            (item) =>
+                                cartLineKey(
+                                    getProductId(item.product as ProductWithId),
+                                    item.variantId
+                                ) === localKey
                         );
                         if (existingIndex >= 0) {
                             mergedItems[existingIndex] = {
